@@ -110,7 +110,7 @@ export const useHistory = (source: string) => useInfiniteQuery({
 
 function useInvalidateRewards() {
   const queryClient = useQueryClient()
-  return () => Promise.all(['faucet', 'ledger', 'tasks', 'referral', 'leaderboard', 'history'].map((key) => queryClient.invalidateQueries({ queryKey: [key] })))
+  return () => Promise.all(['faucet', 'ledger', 'tasks', 'referral', 'leaderboard', 'history', 'surveys', 'videos', 'trivia', 'scratch'].map((key) => queryClient.invalidateQueries({ queryKey: [key] })))
 }
 
 export type ClaimResult = { claimed: boolean; reward: number; balance: number; last_claim_at: string; streak: number }
@@ -158,4 +158,153 @@ export const useMfaFactors = () => useQuery({
 
 export function errorCode(error: unknown) {
   return typeof error === 'object' && error !== null && 'code' in error ? String((error as { code: unknown }).code) : ''
+}
+
+export type SurveySummary = { slug: string; title: string; description: string; reward: number; est_minutes: number; question_count: number; completed: boolean }
+export type SurveyQuestion = { id: number; prompt: string; kind: 'single' | 'scale'; options: string[] }
+export type SurveyDetail = { slug: string; title: string; description: string; reward: number; completed: boolean; questions: SurveyQuestion[] }
+export type AwardResult = { awarded: boolean; reward: number; balance: number }
+
+export const useSurveys = () => useQuery({
+  queryKey: ['surveys'],
+  enabled,
+  retry: false,
+  queryFn: async (): Promise<SurveySummary[]> => {
+    const { data, error } = await client().rpc('list_surveys')
+    if (error) throw error
+    return (data ?? []) as SurveySummary[]
+  },
+})
+
+export function useStartSurvey() {
+  return useMutation({
+    mutationFn: async (slug: string): Promise<SurveyDetail> => {
+      const { data, error } = await client().rpc('get_survey', { p_slug: slug })
+      if (error) throw error
+      return data as SurveyDetail
+    },
+  })
+}
+
+export function useSubmitSurvey() {
+  const invalidate = useInvalidateRewards()
+  return useMutation({
+    mutationFn: async ({ slug, answers }: { slug: string; answers: number[] }): Promise<AwardResult> => {
+      const { data, error } = await client().rpc('submit_survey', { p_slug: slug, p_answers: answers })
+      if (error) throw error
+      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
+      return data[0] as AwardResult
+    },
+    onSuccess: () => { void invalidate() },
+  })
+}
+
+export type EarnVideo = { id: string; title: string; channel: string; duration_seconds: number; reward: number; lang: string; watched: boolean; watched_today: number; daily_limit: number }
+
+export const useVideos = () => useQuery({
+  queryKey: ['videos'],
+  enabled,
+  retry: false,
+  queryFn: async (): Promise<EarnVideo[]> => {
+    const { data, error } = await client().rpc('list_videos')
+    if (error) throw error
+    return (data ?? []) as EarnVideo[]
+  },
+})
+
+export function useStartVideo() {
+  return useMutation({
+    mutationFn: async (videoId: string): Promise<string> => {
+      const { data, error } = await client().rpc('start_video', { p_video_id: videoId })
+      if (error) throw error
+      return data as string
+    },
+  })
+}
+
+export function useCompleteVideo() {
+  const invalidate = useInvalidateRewards()
+  return useMutation({
+    mutationFn: async (videoId: string): Promise<AwardResult> => {
+      const { data, error } = await client().rpc('complete_video', { p_video_id: videoId })
+      if (error) throw error
+      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
+      return data[0] as AwardResult
+    },
+    onSuccess: () => { void invalidate() },
+  })
+}
+
+export type TriviaQuestion = {
+  id: number
+  prompt: string
+  options: string[]
+  answered: boolean
+  your_answer: number | null
+  correct: boolean | null
+  explanation: string | null
+  correct_index: number | null
+}
+
+export const useDailyTrivia = () => useQuery({
+  queryKey: ['trivia'],
+  enabled,
+  retry: false,
+  queryFn: async (): Promise<TriviaQuestion[]> => {
+    const { data, error } = await client().rpc('get_daily_trivia')
+    if (error) throw error
+    return (data ?? []) as TriviaQuestion[]
+  },
+})
+
+export type TriviaResult = { correct: boolean; correct_index: number; explanation: string | null; reward: number; balance: number }
+
+export function useAnswerTrivia() {
+  const invalidate = useInvalidateRewards()
+  return useMutation({
+    mutationFn: async ({ questionId, answer }: { questionId: number; answer: number }): Promise<TriviaResult> => {
+      const { data, error } = await client().rpc('answer_trivia', { p_question_id: questionId, p_answer_index: answer })
+      if (error) throw error
+      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
+      return data[0] as TriviaResult
+    },
+    onSuccess: () => { void invalidate() },
+  })
+}
+
+export type ScratchStatus = { available: boolean; last_reward: number | null; next_available_at: string | null }
+
+export const useScratchStatus = () => useQuery({
+  queryKey: ['scratch'],
+  enabled,
+  retry: false,
+  queryFn: async (): Promise<ScratchStatus> => {
+    const { data, error } = await client().rpc('get_scratch_status')
+    if (error || !data?.[0]) throw error ?? new Error('Sin datos')
+    return data[0] as ScratchStatus
+  },
+})
+
+export function usePlayScratch() {
+  const invalidate = useInvalidateRewards()
+  return useMutation({
+    mutationFn: async (): Promise<{ reward: number; balance: number }> => {
+      const { data, error } = await client().rpc('play_scratch')
+      if (error || !data?.[0]) throw error ?? new Error('El servidor no devolvió el resultado.')
+      return data[0] as { reward: number; balance: number }
+    },
+    onSuccess: () => { void invalidate() },
+  })
+}
+
+export function earnErrorMessage(error: unknown) {
+  const text = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as { message: unknown }).message) : ''
+  if (text.includes('Email confirmation')) return 'Confirma tu correo electrónico para ganar puntos con esta actividad.'
+  if (text.includes('Too fast')) return 'Has respondido demasiado rápido. Lee las preguntas con calma e inténtalo de nuevo.'
+  if (text.includes('Video not finished')) return 'Aún no ha pasado el tiempo necesario. Termina de ver el vídeo para reclamar.'
+  if (text.includes('Daily video limit')) return 'Has alcanzado el límite diario de vídeos. Vuelve mañana.'
+  if (text.includes('Already answered')) return 'Ya has respondido esta pregunta hoy.'
+  if (text.includes('Already played')) return 'Ya has rascado tu cartón de hoy. Vuelve mañana.'
+  if (errorCode(error) === 'PGRST202' || text.includes('Could not find the function')) return 'Esta actividad aún no está activada en la base de datos. Falta aplicar la última migración de Supabase.'
+  return 'No se pudo completar la acción. Inténtalo de nuevo en unos minutos.'
 }

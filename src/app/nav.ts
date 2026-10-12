@@ -1,4 +1,4 @@
-import { Award, BarChart3, CircleHelp, Gift, History, LayoutDashboard, ListChecks, Settings, ShieldCheck, Trophy, User, Users, type LucideIcon } from 'lucide-react'
+import { Award, BarChart3, CircleHelp, ClipboardList, Gift, History, LayoutDashboard, ListChecks, MonitorPlay, Settings, ShieldCheck, Sparkles, Ticket, Trophy, User, Users, type LucideIcon } from 'lucide-react'
 
 export type NavItem = { slug: string; label: string; icon: LucideIcon; title: string }
 
@@ -6,6 +6,12 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   { label: 'Principal', items: [
     { slug: '', label: 'Resumen', icon: LayoutDashboard, title: 'Resumen' },
     { slug: 'faucet', label: 'Faucet diario', icon: Gift, title: 'Faucet diario' },
+  ] },
+  { label: 'Ganar', items: [
+    { slug: 'encuestas', label: 'Encuestas', icon: ClipboardList, title: 'Encuestas' },
+    { slug: 'videos', label: 'Vídeos', icon: MonitorPlay, title: 'Ver vídeos' },
+    { slug: 'trivia', label: 'Trivia diaria', icon: Sparkles, title: 'Trivia diaria' },
+    { slug: 'rasca', label: 'Rasca y gana', icon: Ticket, title: 'Rasca y gana' },
     { slug: 'tareas', label: 'Tareas', icon: ListChecks, title: 'Tareas' },
   ] },
   { label: 'Progreso', items: [
@@ -31,5 +37,5 @@ export const slugFromPath = (pathname: string) => pathname.replace(/^\/dashboard
 
 export const LEGACY_SECTIONS: Record<string, string> = {
   Perfil: 'perfil', Seguridad: 'seguridad', Ajustes: 'ajustes', Historial: 'historial', Referidos: 'referidos',
-  Faucets: 'faucet', Tareas: 'tareas', Temporada: 'temporada', Mercados: 'mercados', Resumen: '',
+  Faucets: 'faucet', Encuestas: 'encuestas', Tareas: 'tareas', Temporada: 'temporada', Mercados: 'mercados', Resumen: '',
 }

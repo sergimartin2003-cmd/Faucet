@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowRight, Check, ShieldCheck } from 'lucide-react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { ArrowRight, Check, ClipboardList, MonitorPlay, ShieldCheck, Sparkles, Ticket } from 'lucide-react'
 import Link from '../../lib/Link'
 import { Badge, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Skeleton, Stat } from '../../ui'
 import { TASKS, buildActivityGrid, describeLedgerEntry, formatPoints, levelFromXp, summarizeLedger } from '../../lib/game'
@@ -9,6 +9,13 @@ import { usePrivacy } from '../../app/sessionContext'
 import ClaimPanel from '../faucet/ClaimPanel'
 import { useFaucetStatus } from '../faucet/useFaucetStatus'
 import ActivityHeatmap from './ActivityHeatmap'
+
+const EARN_TILES = [
+  { to: '/dashboard/encuestas', icon: ClipboardList, title: 'Encuestas', text: 'Respuestas breves, pago único.', reward: '15 – 30 pts', tone: 'var(--violet)' },
+  { to: '/dashboard/videos', icon: MonitorPlay, title: 'Ver vídeos', text: 'Hasta 5 al día, verificados.', reward: '3 – 8 pts', tone: 'var(--amber)' },
+  { to: '/dashboard/trivia', icon: Sparkles, title: 'Trivia diaria', text: 'Tres preguntas nuevas hoy.', reward: '4 pts / acierto', tone: '#ff7ab6' },
+  { to: '/dashboard/rasca', icon: Ticket, title: 'Rasca y gana', text: 'Un cartón gratis cada día.', reward: '1 – 15 pts', tone: '#5cc8ff' },
+]
 
 const dateTime = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
 
@@ -38,6 +45,18 @@ export default function OverviewPage() {
       <Card><Stat label="Nivel" value={ledger.isLoading ? <Skeleton width={40} height={28} /> : level.level} hint={<><ProgressBar value={level.percent} label="Progreso de nivel" /><span style={{ display: 'block', marginTop: 6 }}>{level.intoLevel} / 100 XP</span></>} /></Card>
       <Card><Stat label="Puntos este mes" value={summary ? mask(summary.monthPoints) : <Skeleton width={60} height={28} />} hint={summary ? `Quedan ${summary.daysLeftInMonth} días de temporada` : undefined} /></Card>
     </div>
+
+    <Card>
+      <CardHeader title="Ganar más puntos" description="Cuatro formas de sumar además del faucet diario." />
+      <div className="earn-grid">
+        {EARN_TILES.map(({ to, icon: Icon, title, text, reward, tone }) => <Link key={to} to={to} className="earn-tile" style={{ '--tile': tone } as CSSProperties}>
+          <span className="earn-tile-icon"><Icon size={20} /></span>
+          <h3>{title}</h3>
+          <p>{text}</p>
+          <div className="earn-tile-foot"><span className="earn-tile-reward">{reward}</span><ArrowRight size={14} /></div>
+        </Link>)}
+      </div>
+    </Card>
 
     <div className="grid-main">
       <div className="stack">

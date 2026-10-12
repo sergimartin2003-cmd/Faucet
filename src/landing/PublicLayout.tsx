@@ -6,13 +6,14 @@ import { navigate } from '../lib/router'
 import { contactEmail, siteName } from '../lib/site'
 import { useTheme, type ThemePreference } from '../lib/theme'
 import Link from '../lib/Link'
+import PriceTicker from '../components/PriceTicker'
 import AuthDialog from './AuthDialog'
 import { AuthDialogContext, type AuthDialogApi, type AuthMode } from './auth'
 import './landing.css'
 
 const NAV_LINKS = [
+  { href: '/#ganar', label: 'Ganar' },
   { href: '/#como-funciona', label: 'Cómo funciona' },
-  { href: '/#funciones', label: 'Funciones' },
   { href: '/#reglas', label: 'Reglas' },
   { href: '/#faq', label: 'Preguntas' },
 ]
@@ -79,6 +80,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   return <AuthDialogContext.Provider value={api}>
     <div className="landing-shell">
       <a className="landing-skip" href="#contenido">Saltar al contenido</a>
+      <PriceTicker />
       <header className="landing-header">
         <div className="landing-container landing-header-inner">
           <Link to="/" className="landing-brand" aria-label={`${siteName}, inicio`}><LogoMark /><span>{siteName}</span></Link>

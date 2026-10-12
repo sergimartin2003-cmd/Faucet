@@ -8,6 +8,7 @@ const FAQ: { q: string; a: string }[] = [
   { q: '¿Cómo funciona la racha?', a: 'Reclama al menos una vez cada 48 horas para mantenerla. Si pasa más tiempo, la racha vuelve a empezar. Tu mejor racha se conserva en tu historial.' },
   { q: '¿Cada cuánto puedo reclamar?', a: 'Una vez cada 24 horas desde tu última reclamación. El tiempo restante aparece en el panel de Faucet.' },
   { q: '¿Por qué no puedo reclamar?', a: 'Necesitas haber verificado tu correo electrónico. Si el correo no te llega, revisa la carpeta de spam o vuelve a solicitarlo desde el inicio de sesión.' },
+  { q: '¿Cómo se comprueban los vídeos y las encuestas?', a: 'Todo se valida en el servidor. En los vídeos se exige que haya pasado casi toda su duración desde que pulsaste Ver (máximo 5 al día); en las encuestas, un tiempo mínimo por pregunta. Los premios del rasca y la trivia también los decide la base de datos, no tu navegador.' },
   { q: '¿Qué es el nivel?', a: 'Cada punto acumulado equivale a 1 XP y subes de nivel cada 100 XP. El nivel es solo una referencia de tu progreso.' },
   { q: '¿Cómo funcionan los referidos?', a: 'Recibes 15 puntos por cada persona que se registre con tu enlace y complete su perfil, hasta 20 referidos. El código solo puede aplicarse durante los primeros 7 días de una cuenta nueva.' },
   { q: '¿Qué es la clasificación mensual?', a: 'Ordena a los usuarios por los puntos ganados durante el mes en curso (UTC). Puedes salir de ella o aparecer de forma anónima desde Ajustes.' },

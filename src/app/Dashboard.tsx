@@ -16,6 +16,10 @@ import './app.css'
 const pages: Record<string, ReturnType<typeof lazy>> = {
   '': lazy(() => import('../features/overview/OverviewPage')),
   faucet: lazy(() => import('../features/faucet/FaucetPage')),
+  encuestas: lazy(() => import('../features/surveys/SurveysPage')),
+  videos: lazy(() => import('../features/videos/VideosPage')),
+  trivia: lazy(() => import('../features/trivia/TriviaPage')),
+  rasca: lazy(() => import('../features/scratch/ScratchPage')),
   tareas: lazy(() => import('../features/tasks/TasksPage')),
   temporada: lazy(() => import('../features/season/SeasonPage')),
   logros: lazy(() => import('../features/achievements/AchievementsPage')),

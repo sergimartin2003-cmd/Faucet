@@ -1,4 +1,7 @@
 @import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/ui.css';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildActivityGrid, claimCooldownMs, evaluateAchievements, faucetReward, formatCountdown, isStreakAlive, levelFromXp, summarizeLedger, toCsv } from './game'
+import { describeLedgerEntry, buildActivityGrid, claimCooldownMs, evaluateAchievements, faucetReward, formatCountdown, isStreakAlive, levelFromXp, summarizeLedger, toCsv } from './game'
 
 describe('faucetReward', () => {
   it('starts at 10 and grows 2 per streak day up to 22', () => {
@@ -73,5 +73,16 @@ describe('achievements', () => {
 describe('toCsv', () => {
   it('escapes special characters', () => {
     expect(toCsv([['a', 'b,c'], [1, 'say "hi"']])).toBe('a,"b,c"\n1,"say ""hi"""')
+  })
+})
+
+describe('describeLedgerEntry', () => {
+  it('labels every earn source', () => {
+    for (const source of ['daily_faucet', 'survey', 'video', 'trivia', 'scratch']) {
+      expect(describeLedgerEntry(source, null)).not.toBe('Recompensa')
+    }
+  })
+  it('falls back for unknown sources', () => {
+    expect(describeLedgerEntry('something_else', null)).toBe('Recompensa')
   })
 })

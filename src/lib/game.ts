@@ -5,7 +5,7 @@ export const DAY_MS = 24 * 60 * 60 * 1000
 export const STREAK_WINDOW_MS = 2 * DAY_MS
 export const XP_PER_LEVEL = 100
 
-export type LedgerSource = 'daily_faucet' | 'earn_task' | 'offerwall' | 'referral'
+export type LedgerSource = 'daily_faucet' | 'earn_task' | 'offerwall' | 'referral' | 'survey' | 'video' | 'trivia' | 'scratch'
 export type LedgerRow = { created_at: string; source_type: LedgerSource | string; points: number }
 
 export const LEDGER_SOURCE_LABELS: Record<string, string> = {
@@ -13,6 +13,10 @@ export const LEDGER_SOURCE_LABELS: Record<string, string> = {
   earn_task: 'Tarea',
   referral: 'Referido verificado',
   offerwall: 'Oferta de proveedor',
+  survey: 'Encuesta',
+  video: 'Vídeo visto',
+  trivia: 'Trivia diaria',
+  scratch: 'Rasca y gana',
 }
 
 export const faucetReward = (streak: number) => FAUCET_BASE_REWARD + 2 * Math.min(Math.max(streak - 1, 0), FAUCET_MAX_BONUS_DAYS)

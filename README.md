@@ -29,7 +29,7 @@ Nunca pongas la `service_role` key en variables `VITE_*`.
 
 ## Supabase
 
-1. Crea un proyecto y aplica en orden, desde el SQL Editor, todas las migraciones de `supabase/migrations/` (la última, `202610130007`, añade tareas, historial paginado y clasificación mensual).
+1. Crea un proyecto y aplica en orden, desde el SQL Editor, todas las migraciones de `supabase/migrations/` (`202610130007` añade tareas, historial paginado y clasificación mensual; `202610140008` añade encuestas, vídeos, trivia diaria y rasca y gana, todo validado en el servidor).
 2. En **Authentication → Providers** habilita Email y configura las URLs de sitio y redirección (local y producción).
 3. Configura un SMTP propio en **Authentication → SMTP Settings**: el SMTP por defecto de Supabase solo entrega a miembros del equipo y tiene límites muy bajos.
 4. Para los códigos de recuperación MFA, el proyecto debe tener habilitada esa función de Supabase Auth.
