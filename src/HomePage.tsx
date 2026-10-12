@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   Activity,
-  ArrowDownLeft,
   ArrowLeftRight,
   ArrowRight,
   ArrowUpRight,
@@ -37,8 +36,12 @@ import {
 } from 'lightweight-charts'
 import SupabaseStatus from './components/SupabaseStatus'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { captureReferralFromUrl } from './lib/referral'
+import CountUp from './components/CountUp'
+import { useCardPointer, useParallax, useReveal } from './lib/motion'
 import './HomePage.css'
 
+const CURRENT_YEAR = new Date().getFullYear()
 const API_BASE = 'https://api.binance.com/api/v3'
 const MARKET_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT']
 
@@ -66,8 +69,9 @@ function StaticButton({ children, className = '', onClick }: {
 }
 
 export default function HomePage() {
-  const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).get('login') === '1')
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'recovery' | 'update-password'>('login')
+  const [hasReferral] = useState(captureReferralFromUrl)
+  const [authOpen, setAuthOpen] = useState(() => hasReferral || new URLSearchParams(window.location.search).get('login') === '1')
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'recovery' | 'update-password'>(hasReferral ? 'signup' : 'login')
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authName, setAuthName] = useState('')
@@ -78,9 +82,16 @@ export default function HomePage() {
   const [canResendConfirmation, setCanResendConfirmation] = useState(false)
   const [authRedirect, setAuthRedirect] = useState('/dashboard')
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const pageRef = useRef<HTMLElement>(null)
+  useParallax(pageRef)
+  useReveal(pageRef)
+  const spotlightHandlers = useCardPointer('.bento-card')
+  const tiltHandlers = useCardPointer('.tilt-card')
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('login') !== '1') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('login') !== '1' && !params.has('ref')) return
     window.history.replaceState({}, '', window.location.pathname)
   }, [])
 
@@ -243,140 +254,188 @@ export default function HomePage() {
   }
 
   return (
-    <main className="home-page">
+    <main className="home-page" ref={pageRef}>
+      <div className="scroll-progress" aria-hidden="true" />
       <header className="home-header">
-        <div className="home-brand" aria-label="Faucet Protocol">
+        <a className="home-brand" href="/" aria-label="Faucet Protocol, inicio">
           <span className="home-brand-mark"><i /></span>
           <span className="home-brand-name">faucet<span>.</span></span>
           <span className="home-brand-tag">PROTOCOL</span>
-        </div>
-        <nav className="home-nav" aria-label="Secciones del producto">
-          {[['Ganar', 'Earn'], ['Faucets', 'Faucets'], ['Juegos', 'Juegos'], ['Staking', 'Staking'], ['Anunciar', 'Anunciar'], ['API', 'API']].map(([label, section]) => <button key={section} onClick={() => void openDashboardSection(section)}>{label}</button>)}
+        </a>
+        <nav className={`home-nav ${menuOpen ? 'home-nav-open' : ''}`} aria-label="Secciones del producto">
+          {[['Ganar', 'Earn'], ['Faucets', 'Faucets'], ['Juegos', 'Juegos'], ['Staking', 'Staking'], ['Anunciar', 'Anunciar'], ['API', 'API']].map(([label, section]) => <button key={section} onClick={() => { setMenuOpen(false); void openDashboardSection(section) }}>{label}</button>)}
         </nav>
         <div className="home-auth-actions">
-          {signedInEmail ? <><span className="home-user-email">{signedInEmail}</span><StaticButton className="home-login" onClick={() => void signOut()}><LogOut size={13} />Salir</StaticButton></> : <><StaticButton className="home-login" onClick={() => openAuth('login')}>Iniciar sesión</StaticButton><StaticButton className="home-signup" onClick={() => openAuth('signup')}>Crear cuenta <ArrowRight size={14} /></StaticButton></>}
+          {signedInEmail ? <><span className="home-user-email">{signedInEmail}</span><StaticButton className="home-login" onClick={() => void signOut()}><LogOut size={14} />Salir</StaticButton></> : <><StaticButton className="home-login" onClick={() => openAuth('login')}>Iniciar sesión</StaticButton><StaticButton className="home-signup" onClick={() => openAuth('signup')}>Crear cuenta <ArrowRight size={15} /></StaticButton></>}
+          <button className="home-burger" type="button" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /></button>
         </div>
       </header>
 
-      <div className="home-content">
-        <section className="home-hero">
+      <section className="home-hero" aria-labelledby="hero-title">
+        <div className="hero-backdrop" aria-hidden="true">
+          <div className="hero-lines" data-depth="0.08" />
+          <div className="hero-orb orb-a" data-depth="-0.12" style={{ '--md': 26 } as CSSProperties} />
+          <div className="hero-orb orb-b" data-depth="0.16" style={{ '--md': -34 } as CSSProperties} />
+          <div className="hero-orb orb-c" data-depth="-0.22" style={{ '--md': 18 } as CSSProperties} />
+          <span className="float-coin coin-1" data-depth="-0.28" style={{ '--md': 42 } as CSSProperties}><i>₿</i></span>
+          <span className="float-coin coin-2" data-depth="0.2" style={{ '--md': -52 } as CSSProperties}><i>Ξ</i></span>
+          <span className="float-coin coin-3" data-depth="-0.1" style={{ '--md': 30 } as CSSProperties}><i>◎</i></span>
+          <span className="float-coin coin-4" data-depth="0.32" style={{ '--md': -22 } as CSSProperties}><i>Ð</i></span>
+          <span className="float-coin coin-5" data-depth="-0.34" style={{ '--md': 60 } as CSSProperties}><i>₮</i></span>
+        </div>
+
+        <div className="hero-inner">
           <div className="hero-copy">
-            <div className="home-eyebrow"><span /> MICRO-WALLET · EARN · WEB3</div>
-            <h1>Tu cripto.<br /><em>En movimiento.</em></h1>
-            <p>Gana, guarda y mueve activos digitales desde un solo lugar. Una plataforma para usuarios, creadores y comunidades cripto.</p>
-            <div className="hero-actions">
-              <StaticButton className="hero-primary" onClick={() => void openWallet()}>Abrir tu wallet <ArrowRight size={16} /></StaticButton>
-              <StaticButton className="hero-secondary" onClick={() => void openDashboardSection('Earn')}>Ganar ahora <ArrowUpRight size={15} /></StaticButton>
+            <div className="home-eyebrow hero-in" style={{ '--i': 0 } as CSSProperties}><span className="pulse-dot" /> MICRO-WALLET · EARN · WEB3</div>
+            <h1 id="hero-title" className="hero-title">
+              <span className="title-line"><span className="hero-in" style={{ '--i': 1 } as CSSProperties}>Tu cripto.</span></span>
+              <span className="title-line"><span className="hero-in gradient-text" style={{ '--i': 2 } as CSSProperties}>En movimiento.</span></span>
+            </h1>
+            <p className="hero-lede hero-in" style={{ '--i': 3 } as CSSProperties}>Gana puntos con tareas verificadas, sigue los mercados en vivo y prepara tu wallet en un solo lugar. Una plataforma pensada para usuarios, creadores y comunidades cripto.</p>
+            <div className="hero-actions hero-in" style={{ '--i': 4 } as CSSProperties}>
+              <StaticButton className="hero-primary" onClick={() => void openWallet()}>Abrir mi cuenta <ArrowRight size={17} /></StaticButton>
+              <StaticButton className="hero-secondary" onClick={() => void openDashboardSection('Earn')}>Ganar ahora <ArrowUpRight size={16} /></StaticButton>
             </div>
-            <div className="hero-tertiary"><StaticButton>Explorar faucets <ArrowRight size={13} /></StaticButton><span>Sin custodia Web3 o cuenta tradicional</span></div>
-            <div className="hero-proof"><span><Check size={13} /> Pagos internos instantáneos</span><i /><span>20+ activos digitales</span><i /><span>Seguridad por diseño</span></div>
+            <ul className="hero-proof hero-in" style={{ '--i': 5 } as CSSProperties}>
+              <li><Check size={14} /> Faucet diario con puntos internos</li>
+              <li><Check size={14} /> 2FA con app autenticadora</li>
+              <li><Check size={14} /> Mercados Binance en vivo</li>
+            </ul>
           </div>
 
-          <MarketPreview />
-          <div className="hero-orbit-label orbit-top"><span className="orbit-dot orbit-lime" /> MERCADOS EN VIVO</div>
-          <div className="hero-orbit-label orbit-bottom"><span className="orbit-dot orbit-coral" /> MULTI-ACTIVO</div>
+          <div className="hero-stage hero-in" style={{ '--i': 3 } as CSSProperties} {...tiltHandlers}>
+            <div className="stage-chip chip-earn" data-depth="-0.1" style={{ '--md': 20 } as CSSProperties}><span className="chip-icon"><Gift size={15} /></span><div><strong>Faucet diario</strong><small>+10 puntos cada 24 h</small></div></div>
+            <div className="tilt-card"><MarketPreview /></div>
+            <div className="stage-chip chip-secure" data-depth="0.14" style={{ '--md': -26 } as CSSProperties}><span className="chip-icon chip-icon-cyan"><ShieldCheck size={15} /></span><div><strong>Cuenta protegida</strong><small>TOTP + códigos de recuperación</small></div></div>
+          </div>
+        </div>
+        <a className="scroll-hint" href="#ecosistema" aria-label="Ir al ecosistema"><span /></a>
+      </section>
+
+      <section className="home-ticker-strip" aria-label="Mercados destacados">
+        <div className="ticker-intro"><span className="pulse-dot" /> MERCADOS EN VIVO</div>
+        <MarketTickers />
+      </section>
+
+      <section className="home-facts" aria-label="Recompensas disponibles">
+        {[
+          { value: 10, suffix: '', unit: 'PTS', label: 'Faucet diario', detail: 'Una reclamación cada 24 horas' },
+          { value: 25, suffix: '', unit: 'PTS', label: 'Primera tarea', detail: 'Completa tu perfil una sola vez' },
+          { value: 15, suffix: '', unit: 'PTS', label: 'Por referido', detail: 'Cuando tu invitado completa su perfil' },
+          { value: 2, suffix: 'FA', unit: '', label: 'Acceso seguro', detail: 'TOTP y códigos de recuperación' },
+        ].map((fact, index) => <div className="fact" data-reveal style={{ '--d': `${index * 90}ms` } as CSSProperties} key={fact.label}>
+          <strong className="fact-value">{fact.suffix === 'FA' ? <>2<span>FA</span></> : <><CountUp to={fact.value} /><span>{fact.unit}</span></>}</strong>
+          <span className="fact-label">{fact.label}</span>
+          <small>{fact.detail}</small>
+        </div>)}
+      </section>
+
+      <div className="home-content">
+        <section className="home-section-heading" id="ecosistema">
+          <div data-reveal><span className="home-kicker">UN ECOSISTEMA COMPLETO</span><h2>Todo lo que necesitas.<br /><span className="gradient-text">Todo conectado.</span></h2></div>
+          <p data-reveal style={{ '--d': '120ms' } as CSSProperties}>Desde la primera recompensa hasta las herramientas de crecimiento para tu proyecto. Lo que ya funciona está marcado como activo; el resto son vistas previas.</p>
         </section>
 
-        <section className="home-ticker-strip" aria-label="Mercados destacados">
-          <div className="ticker-intro"><span className="ticker-live-dot" /> MERCADOS</div>
-          <MarketTickers />
-          <div className="ticker-source">SPOT · DATOS EN VIVO</div>
-        </section>
-
-        <section className="home-section-heading">
-          <div><span className="home-kicker">UN ECOSISTEMA COMPLETO</span><h2>Todo lo que necesitas.<br /><span>Todo conectado.</span></h2></div>
-          <p>Desde la primera recompensa hasta las herramientas de crecimiento para tu proyecto.</p>
-        </section>
-
-        <section className="home-feature-grid" aria-label="Funciones de Faucet Protocol">
-          <article className="home-feature wallet-feature">
-            <div className="feature-heading"><span className="feature-icon lime-icon"><Wallet size={17} /></span><span className="feature-label">WALLET</span><span className="feature-top-mark">01</span></div>
-            <h3>Tu micro-wallet multimoneda.</h3>
-            <p>Más de 20 activos, saldo interno y movimientos entre usuarios sin comisiones ni esperas on-chain.</p>
+        <section className="bento" aria-label="Funciones de Faucet Protocol" {...spotlightHandlers}>
+          <article className="bento-card b-wallet" data-reveal>
+            <div className="card-head"><span className="card-icon ic-blue"><Wallet size={18} /></span><span className="card-label">WALLET</span><span className="badge badge-live">PUNTOS ACTIVOS</span></div>
+            <h3>Tu micro-wallet, <span className="soft">paso a paso.</span></h3>
+            <p>Hoy gestionas tu saldo de puntos internos con historial real. Los activos cripto de abajo son una vista previa de lo que llegará.</p>
             <div className="wallet-preview">
               <div className="wallet-preview-heading"><span>PORTAFOLIO <i>VISTA PREVIA</i></span><strong>$4,182.20 <small>USD</small></strong></div>
               {coinRows.map((coin) => <div className="wallet-coin-row" key={coin.symbol}><span className={`coin-mark ${coin.tone}`}>{coin.mark}</span><span className="coin-title"><strong>{coin.symbol}</strong><small>{coin.name}</small></span><span className="coin-balance"><strong>{coin.balance} <small>{coin.symbol}</small></strong><small>{coin.value}</small></span></div>)}
             </div>
-            <div className="static-action-row"><StaticButton><ArrowDownLeft size={14} />Depositar</StaticButton><StaticButton><ArrowUpRight size={14} />Retirar</StaticButton><StaticButton><ArrowRight size={14} />Enviar</StaticButton></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Cartera')}>Ver mi cartera <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature earn-feature-home">
-            <div className="feature-heading"><span className="feature-icon coral-icon"><HandCoins size={17} /></span><span className="feature-label">EARN</span><span className="feature-top-mark">02</span></div>
-            <h3>Tareas verificadas.<br />Puntos internos.</h3>
-            <p>El faucet diario y la tarea de perfil ya acreditan puntos internos. Las ofertas externas aún no están conectadas.</p>
-            <div className="earn-preview-list">{earnRows.map((row) => <div className="earn-preview-row" key={row.label}><span>{row.icon}</span><div><strong>{row.label}</strong><small>{row.detail}</small></div><ArrowRight size={14} /></div>)}</div>
-            <StaticButton className="feature-action">Proveedores externos pendientes</StaticButton>
+          <article className="bento-card b-earn" data-reveal style={{ '--d': '90ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-cyan"><HandCoins size={18} /></span><span className="card-label">EARN</span><span className="badge badge-live">ACTIVO</span></div>
+            <h3>Tareas verificadas. <span className="soft">Puntos internos.</span></h3>
+            <p>El faucet diario y la tarea de perfil ya acreditan puntos. Las ofertas externas llegarán cuando haya proveedor.</p>
+            <div className="earn-preview-list">{earnRows.map((row) => <div className="earn-preview-row" key={row.label}><span>{row.icon}</span><div><strong>{row.label}</strong><small>{row.detail}</small></div><ArrowRight size={15} /></div>)}</div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Earn')}>Empezar a ganar <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature games-feature">
-            <div className="feature-heading"><span className="feature-icon blue-icon"><Gamepad2 size={17} /></span><span className="feature-label">FAIR PLAY</span><span className="feature-top-mark">03</span></div>
+          <article className="bento-card b-games" data-reveal>
+            <div className="card-head"><span className="card-icon ic-violet"><Gamepad2 size={18} /></span><span className="card-label">FAIR PLAY</span><span className="badge">VISTA PREVIA</span></div>
             <h3>Juega con transparencia.</h3>
-            <p>Dice, Crash, Plinko, Mines y ruleta con rondas provably fair y semillas verificables.</p>
-            <div className="game-tile-row"><div><span className="game-glyph glyph-coral">7</span><strong>Dice</strong></div><div><span className="game-glyph glyph-lime">↗</span><strong>Crash</strong></div><div><span className="game-glyph glyph-blue">•••</span><strong>Plinko</strong></div><div><span className="game-glyph glyph-gold">✳</span><strong>Mines</strong></div></div>
-            <StaticButton className="feature-action">Ver juegos <ArrowRight size={14} /></StaticButton>
+            <p>Dice, Plinko y Mines gratuitos de muestra, sin apuestas ni premios.</p>
+            <div className="game-tile-row"><div><span className="game-glyph glyph-coral">7</span><strong>Dice</strong></div><div><span className="game-glyph glyph-blue">•••</span><strong>Plinko</strong></div><div><span className="game-glyph glyph-gold">✳</span><strong>Mines</strong></div></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Juegos')}>Ver juegos <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature swap-feature">
-            <div className="feature-heading"><span className="feature-icon blue-icon"><ArrowLeftRight size={17} /></span><span className="feature-label">SWAP</span><span className="feature-top-mark">04</span></div>
-            <h3>Cambia de activo.<br />Sigue tu camino.</h3>
-            <p>Conversión entre activos compatibles con cotización y comisiones a la vista.</p>
-            <div className="swap-preview"><div><span className="coin-mark coin-orange">₿</span><strong>BTC</strong><small>Bitcoin</small></div><ArrowLeftRight size={17} /><div><span className="coin-mark coin-green">₮</span><strong>USDT</strong><small>Tether</small></div></div>
-            <StaticButton className="feature-action">Ir al exchange <ArrowRight size={14} /></StaticButton>
+          <article className="bento-card b-swap" data-reveal style={{ '--d': '90ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-blue"><ArrowLeftRight size={18} /></span><span className="card-label">SWAP</span><span className="badge">VISTA PREVIA</span></div>
+            <h3>Cambia de activo.</h3>
+            <p>Cotización y comisiones a la vista antes de convertir. Aún sin operaciones reales.</p>
+            <div className="swap-preview"><div><span className="coin-mark coin-orange">₿</span><strong>BTC</strong><small>Bitcoin</small></div><span className="swap-arrow"><ArrowLeftRight size={16} /></span><div><span className="coin-mark coin-green">₮</span><strong>USDT</strong><small>Tether</small></div></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Exchange')}>Ir al exchange <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature staking-feature">
-            <div className="feature-heading"><span className="feature-icon gold-icon"><Flame size={17} /></span><span className="feature-label">TOKEN · DEFI</span><span className="feature-top-mark">05</span></div>
+          <article className="bento-card b-staking" data-reveal style={{ '--d': '180ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-gold"><Flame size={18} /></span><span className="card-label">TOKEN · DEFI</span><span className="badge">VISTA PREVIA</span></div>
             <h3>Utilidad que va más allá.</h3>
-            <p>FEY para ventajas de plataforma; estrategias DeFi opt-in, con riesgos y rendimientos variables visibles.</p>
-            <div className="token-utility-list"><span><Check size={13} /> Descuentos en comisiones</span><span><Check size={13} /> Staking flexible</span><span><Check size={13} /> Integraciones Aave / Uniswap</span></div>
-            <div className="staking-footer"><span>APY <strong>Variable</strong></span><StaticButton>Explorar staking <ArrowRight size={13} /></StaticButton></div>
+            <p>FEY para ventajas de plataforma y estrategias DeFi opt-in, con riesgos visibles.</p>
+            <div className="token-utility-list"><span><Check size={14} /> Descuentos en comisiones</span><span><Check size={14} /> Staking flexible</span><span><Check size={14} /> Rendimiento variable, no garantizado</span></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Staking')}>Explorar staking <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature social-feature">
-            <div className="feature-heading"><span className="feature-icon coral-icon"><Users size={17} /></span><span className="feature-label">SOCIAL · PROGRESO</span><span className="feature-top-mark">06</span></div>
-            <div className="social-copy"><div><h3>Crece junto a tu comunidad.</h3><p>XP, pase de temporada y gremios con metas colectivas.</p></div><div className="season-stamp"><Trophy size={18} /><span>SEASON<br /><strong>04</strong></span></div></div>
-            <div className="level-preview"><div className="level-top"><span>NIVEL 08 <i>EXPLORER</i></span><strong>680 <small>/ 1,000 XP</small></strong></div><div className="level-track"><span /></div><div className="pass-row"><span><Gift size={14} /> Battle Pass</span><strong>GRATIS <i>· PREMIUM</i></strong></div></div>
-            <StaticButton className="feature-action">Ver temporada <ArrowRight size={14} /></StaticButton>
+          <article className="bento-card b-social" data-reveal>
+            <div className="card-head"><span className="card-icon ic-cyan"><Users size={18} /></span><span className="card-label">AFILIADOS · PROGRESO</span><span className="badge badge-live">REFERIDOS ACTIVOS</span></div>
+            <div className="social-copy"><div><h3>Crece junto a tu comunidad.</h3><p>Invita con tu enlace y gana puntos cuando tus referidos completan su perfil. Temporadas y gremios, en vista previa.</p></div><div className="season-stamp"><Trophy size={20} /><span>SEASON<br /><strong>04</strong></span></div></div>
+            <div className="level-preview"><div className="level-top"><span>NIVEL 08 <i>EXPLORER · MUESTRA</i></span><strong>680 <small>/ 1,000 XP</small></strong></div><div className="level-track"><span /></div></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Afiliados')}>Obtener mi enlace <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature ad-feature">
-            <div className="feature-heading"><span className="feature-icon gold-icon"><Megaphone size={17} /></span><span className="feature-label">PARA ANUNCIANTES</span><span className="feature-top-mark">07</span></div>
+          <article className="bento-card b-ads" data-reveal style={{ '--d': '90ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-gold"><Megaphone size={18} /></span><span className="card-label">PARA ANUNCIANTES</span><span className="badge">VISTA PREVIA</span></div>
             <h3>Llega a usuarios que ya usan cripto.</h3>
-            <p>Compra tráfico PTC, banners, ubicaciones patrocinadas y anuncios nativos.</p>
-            <div className="ad-format-row"><span><MousePointerClick size={14} /> PTC</span><span><Activity size={14} /> Banners</span><span><Sparkles size={14} /> Nativos</span></div>
-            <div className="advertiser-actions"><StaticButton className="feature-action">Iniciar campaña <ArrowRight size={14} /></StaticButton><StaticButton className="feature-outline">Listings patrocinados</StaticButton></div>
+            <p>PTC, banners, ubicaciones patrocinadas y anuncios nativos con medición clara.</p>
+            <div className="ad-format-row"><span><MousePointerClick size={15} /> PTC</span><span><Activity size={15} /> Banners</span><span><Sparkles size={15} /> Nativos</span></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Anunciar')}>Ver campañas <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature developer-feature">
-            <div className="feature-heading"><span className="feature-icon blue-icon"><Code2 size={17} /></span><span className="feature-label">PARA DEVELOPERS</span><span className="feature-top-mark">08</span></div>
-            <h3>Pagos cripto listos para integrar.</h3>
-            <p>API, webhooks idempotentes, entorno sandbox y conciliación para tu producto.</p>
+          <article className="bento-card b-dev" data-reveal>
+            <div className="card-head"><span className="card-icon ic-blue"><Code2 size={18} /></span><span className="card-label">PARA DEVELOPERS</span><span className="badge">VISTA PREVIA</span></div>
+            <h3>Pagos listos para integrar.</h3>
+            <p>API, webhooks idempotentes y sandbox para tu producto.</p>
             <div className="api-snippet"><span><i /> API · SANDBOX</span><code><b>POST</b> /v1/payouts</code><code>asset: <em>"USDT"</em> · amount: <em>"1.50"</em></code></div>
-            <StaticButton className="feature-action">Documentación API <ArrowRight size={14} /></StaticButton>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('API')}>Ver la API <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature security-feature">
-            <div className="feature-heading"><span className="feature-icon lime-icon"><ShieldCheck size={17} /></span><span className="feature-label">CAPA DE CONFIANZA</span><span className="feature-top-mark">09</span></div>
+          <article className="bento-card b-security" data-reveal style={{ '--d': '90ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-cyan"><ShieldCheck size={18} /></span><span className="card-label">CAPA DE CONFIANZA</span><span className="badge badge-live">ACTIVO</span></div>
             <h3>Protección desde el acceso.</h3>
-            <p>Inicio híbrido, smart accounts y señales anti-bot asistidas por IA con revisión de decisiones.</p>
-            <div className="security-tags"><span><KeyRound size={13} /> Email · 2FA</span><span><LockKeyhole size={13} /> Smart accounts</span><span><Wallet size={13} /> WalletConnect</span><span><Activity size={13} /> Anti-bot IA</span><span><Check size={13} /> Push · PWA</span></div>
-            <div className="security-note"><span className="security-pulse" /> CONTROL DE CUENTA <strong>ACTIVO</strong></div>
+            <p>Email, 2FA con TOTP y códigos de recuperación de un solo uso.</p>
+            <div className="security-tags"><span><KeyRound size={14} /> Email · 2FA</span><span><LockKeyhole size={14} /> Códigos de recuperación</span><span><Check size={14} /> RLS en base de datos</span></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Seguridad')}>Revisar seguridad <ArrowRight size={15} /></button>
           </article>
 
-          <article className="home-feature analytics-feature">
-            <div className="feature-heading"><span className="feature-icon coral-icon"><Activity size={17} /></span><span className="feature-label">ANALÍTICA</span><span className="feature-top-mark">10</span></div>
-            <h3>Una vista clara de tu actividad.</h3>
-            <p>Portafolio, historial, mapa de actividad y rendimiento de referidos.</p>
-            <div className="analytics-preview"><div className="analytics-bars"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="analytics-caption"><span>ACTIVIDAD · 12 SEMANAS</span><strong><span /> 18 días activos</strong></div></div>
-            <StaticButton className="feature-action">Ver dashboard <ArrowRight size={14} /></StaticButton>
+          <article className="bento-card b-analytics" data-reveal style={{ '--d': '180ms' } as CSSProperties}>
+            <div className="card-head"><span className="card-icon ic-violet"><Activity size={18} /></span><span className="card-label">ANALÍTICA</span><span className="badge badge-live">ACTIVO</span></div>
+            <h3>Tu actividad, a la vista.</h3>
+            <p>Mapa de actividad y puntos del mes calculados desde tu historial real.</p>
+            <div className="analytics-preview"><div className="analytics-bars">{Array.from({ length: 36 }, (_, index) => <i key={index} style={{ '--n': index, '--h': 22 + (index * 37) % 78 } as CSSProperties} />)}</div></div>
+            <button className="card-link" type="button" onClick={() => void openDashboardSection('Resumen')}>Ver mi dashboard <ArrowRight size={15} /></button>
           </article>
         </section>
 
-        <section className="home-onboarding">
-          <div className="onboarding-icon"><CircleDollarSign size={19} /></div>
-          <div><span className="home-kicker">EMPIEZA EN MINUTOS</span><h2>Tu primer satoshi está cerca.</h2><p>Cuenta tradicional, wallet externa o smart account: tú decides cómo entrar.</p></div>
-          <div className="onboarding-methods"><span>Email + 2FA</span><i /><span>WalletConnect</span><i /><span>Account Abstraction</span></div>
-          <StaticButton className="onboarding-cta" onClick={() => openAuth('signup')}>Crear mi cuenta <ArrowRight size={14} /></StaticButton>
+        <section className="home-steps" aria-labelledby="steps-title">
+          <div className="steps-heading" data-reveal><span className="home-kicker">EMPIEZA EN MINUTOS</span><h2 id="steps-title">Tu primera recompensa,<br /><span className="gradient-text">en tres pasos.</span></h2></div>
+          <ol className="steps-list">
+            {[
+              { n: '01', title: 'Crea tu cuenta', text: 'Solo necesitas un correo. Verifícalo para desbloquear tus primeras tareas.', icon: <Mail size={20} />, depth: -0.04 },
+              { n: '02', title: 'Reclama y completa', text: 'Cobra tu faucet diario y completa tu perfil para sumar puntos internos.', icon: <Gift size={20} />, depth: 0.05 },
+              { n: '03', title: 'Protege y crece', text: 'Activa 2FA e invita a tu comunidad con tu enlace de referidos.', icon: <ShieldCheck size={20} />, depth: -0.07 },
+            ].map((step, index) => <li className="step-card" key={step.n} data-reveal data-depth={step.depth} style={{ '--d': `${index * 110}ms` } as CSSProperties}><span className="step-number">{step.n}</span><span className="step-icon">{step.icon}</span><h3>{step.title}</h3><p>{step.text}</p></li>)}
+          </ol>
+        </section>
+
+        <section className="home-cta" data-reveal>
+          <div className="cta-orb cta-orb-a" data-depth="-0.1" />
+          <div className="cta-orb cta-orb-b" data-depth="0.12" />
+          <div className="cta-copy"><span className="home-kicker">FAUCET PROTOCOL</span><h2>Tu primer paso<br />está a un clic.</h2><p>Los puntos son promocionales y no tienen valor monetario. Sin custodia de fondos en esta fase.</p></div>
+          <div className="cta-actions"><StaticButton className="hero-primary" onClick={() => openAuth('signup')}>Crear mi cuenta <ArrowRight size={17} /></StaticButton><StaticButton className="hero-secondary" onClick={() => openAuth('login')}>Ya tengo cuenta</StaticButton></div>
         </section>
 
         <footer className="home-footer">
@@ -384,7 +443,7 @@ export default function HomePage() {
           <div className="footer-link-group"><span>PRODUCTO</span><b>Comisiones</b><b>Verificar pagos</b><b>API docs</b></div>
           <div className="footer-link-group"><span>RECURSOS</span><b>Centro de ayuda</b><b>Blog</b><b>Reportar abuso</b></div>
           <div className="footer-link-group"><span>LEGAL</span><b>Términos</b><b>Privacidad</b><b>Juego responsable</b></div>
-          <div className="footer-status"><SupabaseStatus /><small>© 2026 Faucet Protocol</small></div>
+          <div className="footer-status"><SupabaseStatus /><small>© {CURRENT_YEAR} Faucet Protocol</small></div>
         </footer>
       </div>
 
@@ -492,7 +551,7 @@ function MarketLineChart({ onLive, onError }: { onLive: () => void; onError: () 
     chart = createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
-      layout: { background: { type: ColorType.Solid, color: '#142137' }, textColor: '#91a4bf', fontFamily: 'DM Sans, sans-serif', fontSize: 10 },
+      layout: { background: { type: ColorType.Solid, color: '#142137' }, textColor: '#91a4bf', fontFamily: 'Inter Variable, sans-serif', fontSize: 10 },
       grid: { vertLines: { color: '#ffffff08' }, horzLines: { color: '#ffffff08' } },
       rightPriceScale: { visible: false },
       timeScale: { visible: false, borderVisible: false, rightOffset: 4 },

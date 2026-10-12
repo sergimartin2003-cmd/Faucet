@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'rea
 import HomePage from './HomePage'
 import EarnPlayground from './EarnPlayground'
 import { supabase } from './lib/supabase'
+import { applyPendingReferral } from './lib/referral'
 import type { Session } from '@supabase/supabase-js'
 import {
   Activity, ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Bell, Blocks, CandlestickChart, Check,
@@ -53,12 +54,6 @@ const assets = [
   { ticker: 'USDT', name: 'Tether', amount: '842.50', value: '$842.50', price: '$1.00', change: '0.01%', icon: '₮', color: 'tether' },
   { ticker: 'SOL', name: 'Solana', amount: '2.184', value: '$312.64', price: '$143.15', change: '+5.68%', icon: '◎', color: 'solana' },
 ]
-const heatmap = [
-  0, 1, 2, 0, 3, 2, 1, 0, 1, 3, 2, 1, 0, 2, 3, 1, 0, 2, 1, 3, 3, 2, 1, 0, 1, 2, 3, 2,
-  1, 0, 2, 3, 1, 0, 2, 2, 3, 1, 0, 1, 2, 3, 2, 1, 0, 3, 2, 1, 2, 3, 1, 0, 2, 1, 3, 2,
-  0, 1, 2, 3, 2, 1, 0, 2, 3, 1, 2, 3, 1, 0, 2, 2, 3, 1, 0, 1, 2, 3, 2, 1, 0, 2, 3, 1,
-  1, 2, 3, 0, 1, 2, 3, 2, 1, 0, 2, 3, 1, 2, 3, 1, 0, 1, 2, 3, 2, 1, 3, 2, 0, 1, 2, 3,
-]
 const sectionCopy: Record<string, { eyebrow: string; title: string; description: string }> = {
   Cartera: { eyebrow: 'WALLET', title: 'Tu cartera.', description: 'Consulta por separado tus puntos promocionales reales y los balances cripto que todavía son solo una demo.' },
   Depositar: { eyebrow: 'PAGO POR QR', title: 'Depositar por QR.', description: 'Preparamos depósitos con QR para enviar fondos sin conectar una wallet.' },
@@ -74,7 +69,7 @@ const sectionCopy: Record<string, { eyebrow: string; title: string; description:
   Juegos: { eyebrow: 'JUEGOS · PROVABLY FAIR', title: 'Juegos originales.', description: 'Explora Dice, Crash, Plinko, Mines, Ruleta y más juegos verificables.' },
   Lotería: { eyebrow: 'JUEGOS · SORTEOS', title: 'Loterías y sorteos.', description: 'Consulta sorteos activos, entradas y resultados publicados.' },
   Staking: { eyebrow: 'FEY · STAKING', title: 'Staking y ventajas.', description: 'Consulta posiciones, periodos y beneficios disponibles para FEY.' },
-  Afiliados: { eyebrow: 'AFILIADOS', title: 'Invita y gana.', description: 'Consulta tu enlace, actividad de referidos y comisiones elegibles.' },
+  Afiliados: { eyebrow: 'AFILIADOS', title: 'Invita y gana.', description: 'Comparte tu enlace. Recibes puntos internos cuando una persona invitada verifica su correo y completa su perfil.' },
   Anunciar: { eyebrow: 'PUBLICIDAD', title: 'Llega a usuarios cripto.', description: 'Crea campañas PTC, listings patrocinados y anuncios para la red.' },
   Campañas: { eyebrow: 'PUBLICIDAD · CAMPAÑAS', title: 'Gestiona tus campañas.', description: 'Consulta presupuesto, impresiones, clics y estado de tus anuncios.' },
   'Listings patrocinados': { eyebrow: 'PUBLICIDAD · DIRECTORIO', title: 'Promociona tu faucet.', description: 'Destaca un sitio en el directorio y consulta el alcance de la publicación.' },
@@ -87,7 +82,7 @@ const sectionCopy: Record<string, { eyebrow: string; title: string; description:
   Swap: { eyebrow: 'CONVERSIÓN', title: 'Un activo. Otro activo.', description: 'Consulta una cotización de demostración. Las operaciones reales todavía no están habilitadas.' },
   Arcade: { eyebrow: 'JUEGO RESPONSABLE', title: 'Juega por diversión.', description: 'Esta vista previa no acepta apuestas ni distribuye premios. Los juegos con valor real requieren disponibilidad legal.' },
   Anuncios: { eyebrow: 'AD NETWORK', title: 'Tu audiencia, con intención.', description: 'Explora formatos y una estimación de campaña en modo demo.' },
-  Temporada: { eyebrow: 'SEASON 04 · JULIO', title: 'Sube de nivel.', description: 'Progreso de muestra. Las misiones y recompensas reales se configurarán al conectar el backend.' },
+  Temporada: { eyebrow: 'TEMPORADA MENSUAL', title: 'Sube de nivel.', description: 'Tu nivel se calcula con los puntos internos reales de tu historial. Sin valor monetario.' },
   Gremio: { eyebrow: 'SOCIAL FI', title: 'Mejor en equipo.', description: 'Únete a un gremio de demostración y mira el progreso colectivo.' },
   Desarrolladores: { eyebrow: 'FAUCET PROTOCOL', title: 'Integra pagos sin fricción.', description: 'El portal de desarrolladores está en vista previa. Las claves y endpoints aún no están conectados.' },
 }
@@ -213,7 +208,7 @@ export function DashboardPrototype() {
             <button className="connect-button" onClick={() => { setNotificationsOpen(false); selectPage('Depositar') }} aria-label="Depositar por QR"><span className="connect-indicator" />Depositar por QR</button>
           </div>
         </header>
-        <div className="page-content">
+        <div className="page-content" key={activePage}>
           {isOverview ? <>
             <section className="welcome-row"><div><div className="eyebrow"><span className="live-dot" /> TU CENTRO FINANCIERO <span className="demo-tag">DEMO</span></div><h1>Buenos días, {accountName ? `${accountName[0].toUpperCase()}${accountName.slice(1)}` : 'bienvenido'} <span className="wave">✳</span></h1><p className="welcome-subtitle">Tu actividad cripto, en un solo lugar.</p></div><label className="date-select"><Clock3 size={15} /><select aria-label="Periodo del portafolio" value={period} onChange={(event) => setPeriod(event.target.value as keyof typeof chartSets)}><option value="1D">Hoy</option><option value="1S">Últimos 7 días</option><option value="1M">Últimos 30 días</option><option value="1A">Último año</option></select><ChevronDown size={14} /></label></section>
 
@@ -232,12 +227,12 @@ export function DashboardPrototype() {
             <section className="portfolio-section"><div className="section-header"><div><span className="section-kicker">TUS ACTIVOS · DEMO</span><h2>Portafolio</h2></div><button className="view-all" onClick={() => selectPage('Cartera')}>Ver activos <ArrowRight size={14} /></button></div><AssetPortfolio balanceVisible={balanceVisible} onSelect={setSelectedAsset} /></section>
 
             <section className="bottom-grid">
-              <div className="activity-panel"><div className="section-header"><div><span className="section-kicker">TU ACTIVIDAD</span><h2>Ritmo de ganancias</h2></div><span className="activity-total"><span /> 18 días activos</span></div><div className="heatmap-wrap"><div className="heatmap-months"><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span></div><div className="heatmap-grid">{heatmap.map((level, index) => <span key={index} className={`heat-cell heat-${level}`} title={`${level + 1} actividad${level ? 'es' : ''}`} />)}</div></div><div className="heatmap-legend"><span>Menos</span><i className="heat-0" /><i className="heat-1" /><i className="heat-2" /><i className="heat-3" /><span>Más</span><span className="heatmap-total">$126.84 ganados este mes</span></div></div>
-              <div className="season-panel"><div className="season-top"><span className="season-icon"><Trophy size={17} /></span><span className="season-live"><i /> TEMPORADA 04</span><button className="subtle-icon" aria-label="Más sobre temporada" onClick={() => selectPage('Temporada')}><ArrowUpRight size={15} /></button></div><div className="season-title"><div><span className="section-kicker">PASE DE BATALLA</span><h2>Ruta del explorador</h2></div><span className="season-level">LVL 08</span></div><div className="season-progress"><span style={{ width: '68%' }} /></div><div className="season-progress-copy"><span>680 / 1,000 XP</span><span>Siguiente: <strong>+25 Sats</strong></span></div><button className="season-button" onClick={() => selectPage('Temporada')}>Ver misiones <ArrowRight size={15} /></button></div>
+              <ActivityPanel />
+              <SeasonCard onOpen={() => selectPage('Temporada')} />
             </section>
 
-            <section className="clan-strip"><div className="clan-symbol"><Blocks size={19} /></div><div className="clan-copy"><span className="section-kicker">TU GREMIO</span><strong>Night Owls <span>· #14 global</span></strong></div><div className="clan-members"><span className="mini-avatar mini-a">J</span><span className="mini-avatar mini-b">K</span><span className="mini-avatar mini-c">S</span><span className="mini-avatar mini-more">+8</span></div><div className="clan-stat"><span>XP del gremio</span><strong>24,680 <small>/ 30,000</small></strong></div><button className="clan-open" aria-label="Abrir gremio" onClick={() => selectPage('Gremio')}><ArrowRight size={16} /></button></section>
-            <footer className="page-footer"><span>© 2025 Faucet Protocol <i className="footer-dot" /> Vista previa del producto</span><span><button onClick={() => notify('Centro de ayuda demo')}>Ayuda</button><button onClick={() => notify('Estado: entorno de demostración')}>Estado del sistema <i className="status-dot" /></button></span></footer>
+            <section className="clan-strip"><div className="clan-symbol"><Blocks size={19} /></div><div className="clan-copy"><span className="section-kicker">GREMIO · EJEMPLO DEMO</span><strong>Night Owls <span>· #14 global</span></strong></div><div className="clan-members"><span className="mini-avatar mini-a">J</span><span className="mini-avatar mini-b">K</span><span className="mini-avatar mini-c">S</span><span className="mini-avatar mini-more">+8</span></div><div className="clan-stat"><span>XP del gremio</span><strong>24,680 <small>/ 30,000</small></strong></div><button className="clan-open" aria-label="Abrir gremio" onClick={() => selectPage('Gremio')}><ArrowRight size={16} /></button></section>
+            <footer className="page-footer"><span>© {CURRENT_YEAR} Faucet Protocol <i className="footer-dot" /> Vista previa del producto</span><span><button onClick={() => notify('Centro de ayuda demo')}>Ayuda</button><button onClick={() => notify('Estado: entorno de demostración')}>Estado del sistema <i className="status-dot" /></button></span></footer>
           </> : activePage === 'Mercados' ? <Suspense fallback={<div className="market-loading-page"><span className="live-dot" />Conectando con Binance Spot...</div>}><MarketExplorer search={search} /></Suspense> : <SectionView key={activePage} page={activePage} onAction={openAction} onNavigate={selectPage} onAssetSelect={setSelectedAsset} earnFilter={earnFilter} setEarnFilter={setEarnFilter} />}
         </div>
       </main>
@@ -247,6 +242,117 @@ export function DashboardPrototype() {
       <div className={`toast ${toast ? 'toast-visible' : ''}`} role="status" aria-live="polite"><Check size={15} />{toast}</div>
     </div>
   )
+}
+
+const CURRENT_YEAR = new Date().getFullYear()
+const XP_PER_LEVEL = 100
+
+type SeasonStats = { xp: number; level: number; intoLevel: number; bySource: Record<string, { count: number; days: number }>; daysLeft: number; seasonLabel: string }
+
+function useSeasonStats() {
+  const [rows, setRows] = useState<{ created_at: string; source_type: string; points: number }[] | null>(null)
+  const [errorMessage, setErrorMessage] = useState(() => supabase ? '' : 'Configura Supabase e inicia sesión para ver tu progreso.')
+
+  useEffect(() => {
+    if (!supabase) return
+    let active = true
+    void supabase.from('reward_ledger').select('created_at, source_type, points').order('created_at', { ascending: false }).limit(1000).then(({ data, error }) => {
+      if (!active) return
+      if (error) setErrorMessage('No se pudo cargar tu progreso.')
+      else setRows(data ?? [])
+    })
+    return () => { active = false }
+  }, [])
+
+  const [now] = useState(() => new Date())
+  const stats: SeasonStats | null = rows && (() => {
+    const xp = rows.reduce((sum, row) => sum + row.points, 0)
+    const bySource: SeasonStats['bySource'] = {}
+    const daySets: Record<string, Set<string>> = {}
+    for (const row of rows) {
+      bySource[row.source_type] ??= { count: 0, days: 0 }
+      bySource[row.source_type].count += 1
+      ;(daySets[row.source_type] ??= new Set()).add(new Date(row.created_at).toDateString())
+    }
+    for (const key of Object.keys(daySets)) bySource[key].days = daySets[key].size
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return {
+      xp,
+      level: Math.floor(xp / XP_PER_LEVEL) + 1,
+      intoLevel: xp % XP_PER_LEVEL,
+      bySource,
+      daysLeft: Math.max(1, Math.ceil((monthEnd.getTime() - now.getTime()) / DAY_MS)),
+      seasonLabel: new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(now),
+    }
+  })()
+  return { stats, errorMessage, loading: !rows && !errorMessage }
+}
+
+function SeasonCard({ onOpen }: { onOpen: () => void }) {
+  const { stats, errorMessage, loading } = useSeasonStats()
+  const percent = stats ? (stats.intoLevel / XP_PER_LEVEL) * 100 : 0
+  return <div className="season-panel"><div className="season-top"><span className="season-icon"><Trophy size={17} /></span><span className="season-live"><i /> {stats ? stats.seasonLabel.toUpperCase() : 'TEMPORADA'}</span><button className="subtle-icon" aria-label="Más sobre temporada" onClick={onOpen}><ArrowUpRight size={15} /></button></div><div className="season-title"><div><span className="section-kicker">XP DE PUNTOS</span><h2>Ruta del explorador</h2></div><span className="season-level">{stats ? `LVL ${String(stats.level).padStart(2, '0')}` : 'LVL —'}</span></div><div className="season-progress"><span style={{ width: `${percent}%` }} /></div><div className="season-progress-copy"><span>{stats ? `${stats.intoLevel} / ${XP_PER_LEVEL} XP` : errorMessage || (loading ? 'Cargando…' : '—')}</span><span>{stats ? <>Faltan <strong>{XP_PER_LEVEL - stats.intoLevel} XP</strong></> : ''}</span></div><button className="season-button" onClick={onOpen}>Ver misiones <ArrowRight size={15} /></button></div>
+}
+
+const SEASON_MISSIONS = [
+  { key: 'daily_faucet', title: 'Reclama el faucet diario', goal: 7, unit: 'días', icon: Gift, hint: 'Reclama en 7 días distintos' },
+  { key: 'earn_task', title: 'Completa tu perfil', goal: 1, unit: 'tarea', icon: ShieldCheck, hint: 'Tarea de recompensa única' },
+  { key: 'referral', title: 'Invita a un amigo verificado', goal: 1, unit: 'referido', icon: Users, hint: 'Cuando complete su perfil' },
+  { key: 'offerwall', title: 'Completa una oferta de proveedor', goal: 1, unit: 'oferta', icon: MousePointerClick, hint: 'Requiere un proveedor conectado' },
+] as const
+
+function SeasonPanel() {
+  const { stats, errorMessage, loading } = useSeasonStats()
+  const percent = stats ? (stats.intoLevel / XP_PER_LEVEL) * 100 : 0
+  return <>
+    <div className="season-large"><div className="season-large-head"><span className="season-icon"><Trophy size={19} /></span><span className="season-live"><i /> EN CURSO</span><strong>{stats ? `${stats.daysLeft} días restantes` : '—'}</strong></div><h2>Ruta del explorador</h2><p>Tu XP es la suma de puntos promocionales internos que has recibido (1 punto = 1 XP, {XP_PER_LEVEL} XP por nivel). No tiene valor monetario.</p><div className="season-progress"><span style={{ width: `${percent}%` }} /></div><div className="season-progress-copy"><span>{stats ? `Nivel ${String(stats.level).padStart(2, '0')} · ${stats.intoLevel} / ${XP_PER_LEVEL} XP · ${stats.xp.toLocaleString('es-ES')} XP totales` : errorMessage || (loading ? 'Cargando…' : '—')}</span><span>{stats ? <>Siguiente nivel: <strong>{XP_PER_LEVEL - stats.intoLevel} XP</strong></> : ''}</span></div></div>
+    {SEASON_MISSIONS.map((mission) => {
+      const source = stats?.bySource[mission.key]
+      const progress = Math.min(mission.goal, mission.key === 'daily_faucet' ? source?.days ?? 0 : source?.count ?? 0)
+      const done = progress >= mission.goal
+      const Icon = mission.icon
+      return <div className={`mission-row${done ? ' mission-done' : ''}`} key={mission.key}><span className="mission-icon"><Icon size={17} /></span><div><strong>{mission.title}</strong><small>{mission.hint} · {stats ? `${progress} / ${mission.goal} ${mission.unit}` : '—'}</small></div><span className="mission-reward">{!stats ? '—' : done ? 'Completada' : 'En curso'}</span>{done ? <Check size={15} /> : <ArrowRight size={15} />}</div>
+    })}
+  </>
+}
+
+const ACTIVITY_DAYS = 112
+const DAY_MS = 86_400_000
+
+function ActivityPanel() {
+  const [entries, setEntries] = useState<{ created_at: string; points: number }[] | null>(null)
+  const [errorMessage, setErrorMessage] = useState(() => supabase ? '' : 'Configura Supabase para ver tu actividad.')
+
+  useEffect(() => {
+    if (!supabase) return
+    let active = true
+    const since = new Date(Date.now() - ACTIVITY_DAYS * DAY_MS).toISOString()
+    void supabase.from('reward_ledger').select('created_at, points').gte('created_at', since).then(({ data, error }) => {
+      if (!active) return
+      if (error) setErrorMessage('No se pudo cargar tu actividad.')
+      else setEntries(data ?? [])
+    })
+    return () => { active = false }
+  }, [])
+
+  const [today] = useState(() => { const date = new Date(); date.setHours(0, 0, 0, 0); return date })
+  const firstDay = today.getTime() - (ACTIVITY_DAYS - 1) * DAY_MS
+  const counts = new Array<number>(ACTIVITY_DAYS).fill(0)
+  let monthPoints = 0
+  for (const entry of entries ?? []) {
+    const created = new Date(entry.created_at)
+    const index = Math.floor((new Date(created).setHours(0, 0, 0, 0) - firstDay) / DAY_MS)
+    if (index >= 0 && index < ACTIVITY_DAYS) counts[index] += 1
+    if (created.getFullYear() === today.getFullYear() && created.getMonth() === today.getMonth()) monthPoints += entry.points
+  }
+  const activeDays = counts.filter(Boolean).length
+  const monthLabels = Array.from({ length: 5 }, (_, i) => new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(new Date(firstDay + Math.floor((i * ACTIVITY_DAYS) / 5) * DAY_MS)))
+
+  return <div className="activity-panel">
+    <div className="section-header"><div><span className="section-kicker">TU ACTIVIDAD</span><h2>Ritmo de recompensas</h2></div><span className="activity-total"><span /> {entries ? `${activeDays} días activos` : '—'}</span></div>
+    <div className="heatmap-wrap"><div className="heatmap-months">{monthLabels.map((label, i) => <span key={i}>{label}</span>)}</div><div className="heatmap-grid" role="img" aria-label={`Actividad de recompensas de los últimos ${ACTIVITY_DAYS} días`}>{counts.map((count, index) => <span key={index} className={`heat-cell heat-${Math.min(count, 3)}`} title={`${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(new Date(firstDay + index * DAY_MS))}: ${count} recompensa${count === 1 ? '' : 's'}`} />)}</div></div>
+    <div className="heatmap-legend"><span>Menos</span><i className="heat-0" /><i className="heat-1" /><i className="heat-2" /><i className="heat-3" /><span>Más</span><span className="heatmap-total">{errorMessage || (entries ? `${monthPoints.toLocaleString('es-ES')} puntos este mes` : 'Cargando…')}</span></div>
+  </div>
 }
 
 function DepositByQr() {
@@ -387,9 +493,10 @@ function SectionView({ page, onAction, onNavigate, onAssetSelect, earnFilter, se
     </> : page === 'Swap' || page === 'Exchange' ? <SwapPreview />
       : page === 'Arcade' || page === 'Juegos' ? <><div className="game-grid">{[{ name: 'Dice', label: 'Lanza el dado · gratis', icon: '01', color: 'game-coral', ready: true }, { name: 'Mines', label: 'Tablero de 16 casillas', icon: '✳', color: 'game-yellow', ready: true }, { name: 'Plinko', label: 'Suelta una ficha · gratis', icon: '•••', color: 'game-blue', ready: true }, { name: 'Crash', label: 'En preparación', icon: '↗', color: 'game-lime', ready: false }, { name: 'Ruleta', label: 'En preparación', icon: '◉', color: 'game-blue', ready: false }, { name: 'Limbo', label: 'En preparación', icon: '↗', color: 'game-lime', ready: false }].map((game) => <button className="game-card" key={game.name} disabled={!game.ready} onClick={() => setSelectedActivity({ mode: 'game', title: game.name, detail: game.label, reward: 'Sin valor monetario' })}><span className={`game-art ${game.color}`}>{game.icon}</span><span className="game-meta"><strong>{game.name}</strong><small>{game.label}</small></span>{game.ready && <ArrowUpRight size={16} />}</button>)}</div><div className="notice-line"><ShieldCheck size={16} /><span>Juegos gratuitos de muestra. No aceptan apuestas ni entregan premios.</span></div></>
       : ['Anuncios', 'Anunciar', 'Campañas', 'Listings patrocinados'].includes(page) ? <><div className="ad-metrics">{[['IMPRESIONES DEMO', '24,680'], ['CTR ESTIMADO', '2.84%'], ['COSTE MEDIO', '$0.012']].map(([label, value]) => <div className="ad-metric" key={label}><span>{label}</span><strong>{value}</strong><small><Activity size={13} /> Campaña de muestra</small></div>)}</div><button className="campaign-cta" onClick={() => onAction(page === 'Listings patrocinados' ? 'Crear listing' : 'Crear campaña')}><span><Megaphone size={18} /><strong>{page === 'Listings patrocinados' ? 'Promociona tu faucet' : 'Configura tu primera campaña'}</strong><small>{page === 'Listings patrocinados' ? 'Ubicación destacada en el directorio · simulación' : 'PTC, banners y anuncios nativos · simulación'}</small></span><ArrowRight size={18} /></button></>
-      : page === 'Temporada' ? <><div className="season-large"><div className="season-large-head"><span className="season-icon"><Trophy size={19} /></span><span className="season-live"><i /> EN CURSO</span><strong>19 días restantes</strong></div><h2>Ruta del explorador</h2><p>Completa actividades para progresar. En producción, cada misión tendrá reglas y recompensas publicadas.</p><div className="season-progress"><span style={{ width: '68%' }} /></div><div className="season-progress-copy"><span>Nivel 08 · 680 / 1,000 XP</span><span>Próxima recompensa: <strong>25 Sats demo</strong></span></div></div><div className="mission-row"><span className="mission-icon"><MousePointerClick size={17} /></span><div><strong>Completa 3 ofertas</strong><small>Progreso: 2 / 3 · +120 XP</small></div><span className="mission-reward">+120 XP</span><ArrowRight size={15} /></div><div className="mission-row"><span className="mission-icon mission-gift"><Gift size={17} /></span><div><strong>Visita la plataforma 5 días</strong><small>Progreso: 4 / 5 · +80 XP</small></div><span className="mission-reward">+80 XP</span><ArrowRight size={15} /></div></>
+      : page === 'Temporada' ? <SeasonPanel />
       : page === 'Gremio' ? <div className="guild-panel"><div className="guild-banner"><div className="guild-emblem"><Blocks size={26} /></div><div><span className="section-kicker">GREMIO · #14 GLOBAL</span><h2>Night Owls</h2><p>Juntos desde hace 42 días</p></div><button className="action-secondary" onClick={() => onAction('Invitar al gremio')}><Users size={15} />Invitar</button></div><div className="guild-stats"><div><span>XP colectiva</span><strong>24,680 <small>/ 30,000</small></strong></div><div><span>Miembros activos</span><strong>12 <small>/ 20</small></strong></div><div><span>Posición semanal</span><strong>#14 <small>↑ 3</small></strong></div></div><div className="guild-footer"><span><Flame size={15} /> Racha de gremio: 8 días</span><button className="text-link" onClick={() => onAction('Tabla de posiciones')}>Ver tabla <ArrowRight size={14} /></button></div></div>
       : page === 'Desarrolladores' || page === 'API' ? <div className="developer-panel"><div className="developer-icon"><Code2 size={24} /></div><div><span className="section-kicker">API DE PAGOS</span><h2>Integra. Prueba. Lanza.</h2><p>Consulta documentación, crea credenciales de sandbox y simula webhooks cuando el portal esté conectado.</p><div className="developer-actions"><button className="action-primary" onClick={() => onAction('Documentación API')}><Code2 size={15} />Ver documentación</button><button className="action-secondary" onClick={() => onAction('Crear API key')}><Plus size={15} />Crear API key</button></div></div><div className="code-preview"><span><i /> SANDBOX · EJEMPLO</span><pre>{`POST /v1/payouts\nAuthorization: Bearer demo_key\n\n{\n  "asset": "USDT",\n  "amount": "1.50"\n}`}</pre></div></div>
+      : page === 'Afiliados' ? <ReferralPanel />
       : page === 'Perfil' ? <AccountProfile />
         : page === 'Seguridad' ? <SecurityCenter />
       : <ModuleOverview page={page} onAction={onAction} />}
@@ -405,7 +512,6 @@ const moduleOptions: Record<string, { metric: string; value: string; caption: st
   Direcciones: { metric: 'DIRECCIONES GUARDADAS', value: '0', caption: 'ninguna en esta vista demo', rows: [{ title: 'Lista de permitidas', detail: 'Guarda direcciones de retiro verificadas', value: 'Vacía' }, { title: 'Red correcta', detail: 'La red de destino debe coincidir', value: 'Importante' }] },
   Lotería: { metric: 'SORTEOS ACTIVOS', value: '3', caption: 'muestra ilustrativa', rows: [{ title: 'Sorteo semanal', detail: 'BTC · Cierra en 2 d 14 h', value: 'Ver reglas' }, { title: 'Premio comunitario', detail: 'DOGE · Cierra en 5 d', value: 'Ver reglas' }] },
   Staking: { metric: 'RENDIMIENTO', value: 'Variable', caption: 'no garantizado · depende del protocolo', rows: [{ title: 'FEY flexible', detail: 'Sin periodo fijo · riesgos del token', value: 'Más información' }, { title: 'Yield DeFi', detail: 'Estrategia externa · riesgo de contrato', value: 'No conectado' }] },
-  Afiliados: { metric: 'REFERIDOS', value: '0', caption: 'sin actividad conectada', rows: [{ title: 'Enlace de invitación', detail: 'Disponible al activar afiliados', value: 'Pendiente' }, { title: 'Comisiones', detail: 'Reglas y condiciones publicadas', value: 'Pendiente' }] },
   Perfil: { metric: 'CUENTA', value: 'Demo', caption: 'perfil no conectado', rows: [{ title: 'Información personal', detail: 'Nombre visible y correo', value: 'Editar' }, { title: 'Preferencias', detail: 'Idioma y moneda de visualización', value: 'Configurar' }] },
   Seguridad: { metric: 'PROTECCIÓN', value: '2FA', caption: 'ejemplo visual', rows: [{ title: 'Autenticación de dos factores', detail: 'Segundo factor para iniciar sesión', value: 'Revisar' }, { title: 'Sesiones activas', detail: 'Cierra sesiones que no reconozcas', value: '0 activas' }, { title: 'Historial de acceso', detail: 'Actividad reciente de cuenta', value: 'Consultar' }] },
   Ajustes: { metric: 'PREFERENCIAS', value: '3', caption: 'controles disponibles', rows: [{ title: 'Idioma', detail: 'Español', value: 'Cambiar' }, { title: 'Moneda de visualización', detail: 'USD', value: 'Cambiar' }, { title: 'Notificaciones', detail: 'Correo y alertas de cuenta', value: 'Configurar' }] },
@@ -413,10 +519,17 @@ const moduleOptions: Record<string, { metric: string; value: string; caption: st
 
 type RewardLedgerEntry = {
   id: number
-  source_type: 'daily_faucet' | 'earn_task' | 'offerwall'
+  source_type: 'daily_faucet' | 'earn_task' | 'offerwall' | 'referral'
   points: number
   balance_after: number
   created_at: string
+}
+
+const LEDGER_SOURCE_LABELS: Record<RewardLedgerEntry['source_type'], string> = {
+  daily_faucet: 'Faucet diario',
+  earn_task: 'Tarea: perfil completo',
+  offerwall: 'Oferta de proveedor',
+  referral: 'Referido verificado',
 }
 
 function PointsWallet({ showHistory = false, onNavigate }: { showHistory?: boolean; onNavigate?: (page: string) => void }) {
@@ -462,9 +575,57 @@ function PointsWallet({ showHistory = false, onNavigate }: { showHistory?: boole
     {showHistory && (loading
       ? <p className="reward-history-empty">Cargando movimientos…</p>
       : ledger.length
-        ? <div className="points-wallet-history">{ledger.map((entry) => <div className="reward-history-row" key={entry.id}><span><strong>{entry.source_type === 'daily_faucet' ? 'Faucet diario' : entry.source_type === 'earn_task' ? 'Tarea: perfil completo' : 'Oferta de proveedor'}</strong><small>{new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(entry.created_at))}</small></span><strong>+{entry.points} <small>· saldo {entry.balance_after}</small></strong></div>)}</div>
+        ? <div className="points-wallet-history">{ledger.map((entry) => <div className="reward-history-row" key={entry.id}><span><strong>{LEDGER_SOURCE_LABELS[entry.source_type]}</strong><small>{new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(entry.created_at))}</small></span><strong>+{entry.points} <small>· saldo {entry.balance_after}</small></strong></div>)}</div>
         : !errorMessage && <p className="reward-history-empty">Todavía no hay recompensas acreditadas.</p>)}
     {!showHistory && onNavigate && <button className="text-link points-wallet-link" onClick={() => onNavigate('Historial')}>Ver historial de puntos <ArrowRight size={13} /></button>}
+  </section>
+}
+
+type ReferralSummary = {
+  code: string
+  total_referrals: number
+  rewarded_referrals: number
+  points_earned: number
+  was_referred: boolean
+  max_rewarded: number
+  reward_per_referral: number
+}
+
+function ReferralPanel() {
+  const [summary, setSummary] = useState<ReferralSummary | null>(null)
+  const [loading, setLoading] = useState(Boolean(supabase))
+  const [errorMessage, setErrorMessage] = useState(() => supabase ? '' : 'Configura Supabase para usar afiliados.')
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) return
+    let active = true
+    void supabase.rpc('get_referral_summary').then(({ data, error }) => {
+      if (!active) return
+      if (error || !data?.[0]) setErrorMessage('No se pudo cargar tu enlace de invitación. Comprueba que aplicaste la migración de referidos.')
+      else setSummary(data[0])
+      setLoading(false)
+    })
+    return () => { active = false }
+  }, [])
+
+  const link = summary ? `${window.location.origin}/?ref=${summary.code}` : ''
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setErrorMessage('No se pudo copiar el enlace. Cópialo manualmente.')
+    }
+  }
+
+  return <section className="points-wallet referral-panel">
+    <div className="points-wallet-summary"><div><span className="section-kicker">PROGRAMA DE REFERIDOS · PUNTOS INTERNOS</span><h2>Tu enlace de invitación</h2><p>{summary ? `+${summary.reward_per_referral} puntos por referido verificado, hasta ${summary.max_rewarded} referidos.` : 'Sin valor monetario, transferencias ni retiros.'}</p></div><strong>{loading ? '…' : summary ? summary.points_earned.toLocaleString('es-ES') : '—'}<small> puntos ganados</small></strong></div>
+    {summary && <div className="referral-link-row"><input readOnly aria-label="Enlace de invitación" value={link} onFocus={(event) => event.currentTarget.select()} /><button className="action-primary" onClick={() => void copyLink()}>{copied ? 'Copiado' : 'Copiar enlace'}</button></div>}
+    {summary && <div className="referral-stats"><div><span>Invitados registrados</span><strong>{summary.total_referrals}</strong></div><div><span>Referidos verificados</span><strong>{summary.rewarded_referrals} <small>/ {summary.max_rewarded}</small></strong></div><div><span>Tu cuenta</span><strong>{summary.was_referred ? 'Invitada' : 'Directa'}</strong></div></div>}
+    {errorMessage && <p className="profile-feedback-error" role="alert">{errorMessage}</p>}
+    <div className="notice-line"><ShieldCheck size={16} /><span>El código solo puede aplicarse durante los primeros 7 días de una cuenta nueva y no se puede usar con la propia cuenta. Los puntos no son criptomonedas ni se pueden retirar.</span></div>
   </section>
 }
 
@@ -602,7 +763,7 @@ function EarnTasks({ onNavigate }: { onNavigate: (page: string) => void }) {
     {hasSession && errorMessage && <p className="profile-feedback-error" role="alert">{errorMessage}</p>}
     {message && <p className="profile-feedback" role="status">{message}</p>}
     <p className="earn-task-disclaimer"><ShieldCheck size={14} />Puntos promocionales internos, sin valor monetario ni conversión o retiro en cripto.</p>
-    {hasSession && <div className="reward-history"><div className="reward-history-heading"><span className="section-kicker">ACTIVIDAD RECIENTE</span><strong>Historial de puntos</strong></div>{ledger.length ? ledger.map((entry) => <div className="reward-history-row" key={entry.id}><span><strong>{entry.source_type === 'daily_faucet' ? 'Faucet diario' : entry.source_type === 'earn_task' ? 'Tarea: perfil completo' : 'Oferta de proveedor'}</strong><small>{new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(entry.created_at))}</small></span><strong>+{entry.points} <small>· saldo {entry.balance_after}</small></strong></div>) : <p className="reward-history-empty">Todavía no hay recompensas acreditadas.</p>}</div>}
+    {hasSession && <div className="reward-history"><div className="reward-history-heading"><span className="section-kicker">ACTIVIDAD RECIENTE</span><strong>Historial de puntos</strong></div>{ledger.length ? ledger.map((entry) => <div className="reward-history-row" key={entry.id}><span><strong>{LEDGER_SOURCE_LABELS[entry.source_type]}</strong><small>{new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(entry.created_at))}</small></span><strong>+{entry.points} <small>· saldo {entry.balance_after}</small></strong></div>) : <p className="reward-history-empty">Todavía no hay recompensas acreditadas.</p>}</div>}
   </section>
 }
 
@@ -1017,7 +1178,9 @@ function DashboardRoute() {
       try {
         const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
         if (error) throw error
-        if (active) setAuthStatus(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2' ? 'mfa-required' : 'ready')
+        const mfaRequired = data.nextLevel === 'aal2' && data.currentLevel !== 'aal2'
+        if (!mfaRequired) void applyPendingReferral()
+        if (active) setAuthStatus(mfaRequired ? 'mfa-required' : 'ready')
       } catch {
         if (active) setAuthStatus('error')
       }

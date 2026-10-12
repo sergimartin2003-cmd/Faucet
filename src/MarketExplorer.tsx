@@ -224,7 +224,7 @@ function LiveCandleChart({ symbol, interval, onPrice, onFeedStatus }: {
     chart = createChart(container, {
       width: container.clientWidth,
       height: chartHeight,
-      layout: { background: { type: ColorType.Solid, color: '#142137' }, textColor: '#91a4bf', fontFamily: 'DM Sans, sans-serif', fontSize: 11 },
+      layout: { background: { type: ColorType.Solid, color: '#142137' }, textColor: '#91a4bf', fontFamily: 'Inter Variable, sans-serif', fontSize: 11 },
       grid: { vertLines: { color: '#b5d1f00b' }, horzLines: { color: '#b5d1f00b' } },
       rightPriceScale: { borderColor: '#2c3e59', scaleMargins: { top: 0.12, bottom: 0.12 } },
       timeScale: { borderColor: '#2c3e59', timeVisible: true, secondsVisible: false, rightOffset: 8 },
