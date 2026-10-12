@@ -38,6 +38,8 @@ import SupabaseStatus from './components/SupabaseStatus'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { captureReferralFromUrl } from './lib/referral'
 import CountUp from './components/CountUp'
+import Captcha from './components/Captcha'
+import { turnstileSiteKey } from './lib/turnstile'
 import { useCardPointer, useParallax, useReveal } from './lib/motion'
 import './HomePage.css'
 
@@ -80,6 +82,8 @@ export default function HomePage() {
   const [authError, setAuthError] = useState('')
   const [authMessage, setAuthMessage] = useState('')
   const [canResendConfirmation, setCanResendConfirmation] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaKey, setCaptchaKey] = useState(0)
   const [authRedirect, setAuthRedirect] = useState('/dashboard')
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -166,12 +170,21 @@ export default function HomePage() {
     setAuthError('')
     setAuthMessage('')
     setCanResendConfirmation(false)
+    const needsCaptcha = Boolean(turnstileSiteKey) && authMode !== 'update-password'
+    if (needsCaptcha && !captchaToken) {
+      setAuthError('Completa la verificación anti-bots para continuar.')
+      setAuthBusy(false)
+      return
+    }
+    const captchaOptions = needsCaptcha ? { captchaToken } : {}
     try {
       if (authMode === 'signup') {
+        const { data: emailAllowed } = await supabase.rpc('is_email_allowed', { p_email: authEmail.trim() })
+        if (emailAllowed === false) throw new Error('disposable email')
         const { data, error } = await supabase.auth.signUp({
           email: authEmail.trim(),
           password: authPassword,
-          options: { data: { display_name: authName.trim() || undefined } },
+          options: { data: { display_name: authName.trim() || undefined }, emailRedirectTo: window.location.origin, ...captchaOptions },
         })
         if (error) throw error
         if (data.session) {
@@ -183,6 +196,7 @@ export default function HomePage() {
       } else if (authMode === 'recovery') {
         const { error } = await supabase.auth.resetPasswordForEmail(authEmail.trim(), {
           redirectTo: window.location.origin,
+          ...captchaOptions,
         })
         if (error) throw error
         setAuthMessage('Si existe una cuenta para este correo, recibirás un enlace para restablecer la contraseña.')
@@ -192,7 +206,7 @@ export default function HomePage() {
         setAuthMessage('Contraseña actualizada. Ya puedes seguir usando tu cuenta.')
         setAuthMode('login')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email: authEmail.trim(), password: authPassword })
+        const { error } = await supabase.auth.signInWithPassword({ email: authEmail.trim(), password: authPassword, options: captchaOptions })
         if (error) throw error
         setAuthMessage('Sesión iniciada correctamente.')
         window.location.assign(authRedirect)
@@ -202,6 +216,12 @@ export default function HomePage() {
       const normalizedMessage = message.toLowerCase()
       if (authMode === 'signup' && normalizedMessage.includes('error sending confirmation email')) {
         setAuthError('Supabase no pudo enviar el correo. El SMTP de prueba solo entrega a correos del equipo y tiene un límite bajo. Configura un SMTP propio en Supabase → Authentication → SMTP Settings.')
+      } else if (authMode === 'signup' && (normalizedMessage.includes('disposable') || normalizedMessage.includes('database error saving new user'))) {
+        setAuthError('Los correos temporales o desechables no están permitidos. Usa tu correo personal.')
+      } else if (normalizedMessage.includes('captcha')) {
+        setAuthError('La verificación anti-bots falló. Inténtalo de nuevo.')
+      } else if (normalizedMessage.includes('rate limit') || normalizedMessage.includes('too many')) {
+        setAuthError('Demasiados intentos. Espera unos minutos antes de volver a probar.')
       } else if (authMode === 'login' && normalizedMessage.includes('email not confirmed')) {
         setAuthError('Tu correo todavía no está confirmado.')
         setCanResendConfirmation(true)
@@ -210,6 +230,8 @@ export default function HomePage() {
       }
     } finally {
       setAuthBusy(false)
+      setCaptchaToken('')
+      setCaptchaKey((key) => key + 1)
     }
   }
 
@@ -465,6 +487,7 @@ export default function HomePage() {
             {canResendConfirmation && <button className="auth-text-button" type="button" disabled={authBusy || !authEmail.trim()} onClick={() => void resendConfirmation()}>{authBusy ? 'Enviando…' : 'Reenviar correo de verificación'}</button>}
             {authMessage && <p className="auth-feedback auth-feedback-success" role="status">{authMessage}</p>}
             {authMode === 'signup' && signedInEmail && <button className="auth-signout-button" type="button" disabled={authBusy} onClick={() => void signOut()}><LogOut size={14} />{authBusy ? 'Cerrando sesión…' : 'Cerrar sesión para revisar el correo'}</button>}
+            {authMode !== 'update-password' && <Captcha key={captchaKey} onToken={setCaptchaToken} />}
             <button className="auth-submit" type="submit" disabled={!isSupabaseConfigured || authBusy}>{authBusy ? 'Procesando…' : authMode === 'signup' ? 'Crear cuenta' : authMode === 'recovery' ? 'Enviar enlace' : authMode === 'update-password' ? 'Guardar contraseña' : 'Iniciar sesión'} <ArrowRight size={15} /></button>
           </form>
           <div className="auth-switch">{authMode === 'recovery' || authMode === 'update-password' ? <button className="auth-text-button" type="button" onClick={() => { setAuthMode('login'); setAuthError(''); setAuthMessage('') }}>Volver a iniciar sesión</button> : <>{authMode === 'signup' ? '¿Ya tienes cuenta?' : '¿Primera vez por aquí?'} <button className="auth-text-button" type="button" onClick={() => { setAuthMode(authMode === 'signup' ? 'login' : 'signup'); setAuthError(''); setAuthMessage('') }}>{authMode === 'signup' ? 'Inicia sesión' : 'Crear cuenta'}</button></>}</div>

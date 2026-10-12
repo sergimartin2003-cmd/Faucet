@@ -16,7 +16,7 @@ Verificaciones disponibles: `npm run build` y `npm run lint`. La build genera un
 ## Conectar Supabase
 
 1. Crea un proyecto en Supabase y configura `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (o la clave legacy `VITE_SUPABASE_ANON_KEY`) en `.env.local`, usando `.env.example` como referencia. `.env.local` está ignorado por Git.
-2. Ejecuta en orden `supabase/migrations/202610100001_profiles.sql`, `supabase/migrations/202610100002_daily_faucet.sql`, `supabase/migrations/202610100003_earn_tasks.sql` y `supabase/migrations/202610100004_offerwall_callbacks.sql` y `supabase/migrations/202610120005_referrals.sql` en el SQL Editor del proyecto. La última migración prepara la tabla privada e idempotente de completaciones externas y una función de crédito que solo puede ejecutar `service_role`; no activa ningún proveedor ni acepta llamadas desde el navegador.
+2. Ejecuta en orden `supabase/migrations/202610100001_profiles.sql`, `supabase/migrations/202610100002_daily_faucet.sql`, `supabase/migrations/202610100003_earn_tasks.sql` y `supabase/migrations/202610100004_offerwall_callbacks.sql` y `supabase/migrations/202610120005_referrals.sql` y `supabase/migrations/202610120006_settings_streaks_abuse.sql` en el SQL Editor del proyecto. La última migración prepara la tabla privada e idempotente de completaciones externas y una función de crédito que solo puede ejecutar `service_role`; no activa ningún proveedor ni acepta llamadas desde el navegador.
 3. En Supabase, habilita el proveedor Email en **Authentication → Providers** y configura las URLs de sitio/redirección para el origen local (`http://localhost:5173`) y el dominio de producción.
 4. Reinicia Vite. El indicador del pie de página consulta `profiles` y distingue conexión, migración pendiente y credenciales sin configurar.
 
@@ -180,3 +180,15 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Ajustes de cuenta, rachas y anti-abuso
+
+La migración 6 añade:
+
+- **Perfil**: país, bio y color de avatar (además del nombre).
+- **Ajustes** (`user_settings`): aviso del navegador cuando el faucet está listo y ocultar saldos por defecto.
+- **Rachas del faucet**: 10 puntos base, +2 por cada día seguido hasta 22; la racha se pierde si pasan más de 48 h.
+- **Anti-abuso**: correo verificado obligatorio para reclamar, bloqueo de dominios de correo desechable (tabla `blocked_email_domains`) y eliminación de cuenta (`delete_my_account`).
+- **Captcha opcional**: define `VITE_TURNSTILE_SITE_KEY` y activa CAPTCHA (Turnstile) en Supabase → Authentication → Attack Protection.
+
+Limitaciones: los puntos siguen siendo internos y sin valor monetario; el aviso del faucet solo funciona con el panel abierto (no hay correos programados); no hay detección de multi-cuenta más allá del correo verificado, la lista de dominios y el captcha.

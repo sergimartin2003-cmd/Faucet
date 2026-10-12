@@ -3,6 +3,11 @@ import HomePage from './HomePage'
 import EarnPlayground from './EarnPlayground'
 import { supabase } from './lib/supabase'
 import { applyPendingReferral } from './lib/referral'
+import { CLAIM_EVENT, useAccountPrefs } from './lib/accountPrefs'
+import { useFaucetReminder } from './lib/faucetReminder'
+import AccountProfile from './components/AccountProfile'
+import AccountAccess from './components/AccountAccess'
+import AccountSettings from './components/AccountSettings'
 import type { Session } from '@supabase/supabase-js'
 import {
   Activity, ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Bell, Blocks, CandlestickChart, Check,
@@ -74,9 +79,9 @@ const sectionCopy: Record<string, { eyebrow: string; title: string; description:
   Campañas: { eyebrow: 'PUBLICIDAD · CAMPAÑAS', title: 'Gestiona tus campañas.', description: 'Consulta presupuesto, impresiones, clics y estado de tus anuncios.' },
   'Listings patrocinados': { eyebrow: 'PUBLICIDAD · DIRECTORIO', title: 'Promociona tu faucet.', description: 'Destaca un sitio en el directorio y consulta el alcance de la publicación.' },
   API: { eyebrow: 'DESARROLLADORES', title: 'API y pagos para sitios.', description: 'Integra pagos, callbacks y verificación desde tus aplicaciones.' },
-  Perfil: { eyebrow: 'CUENTA', title: 'Tu perfil.', description: 'Administra identidad pública, correo y preferencias de cuenta.' },
-  Seguridad: { eyebrow: 'CUENTA · SEGURIDAD', title: 'Protege tu cuenta.', description: 'Revisa autenticación, sesiones, 2FA y opciones de recuperación.' },
-  Ajustes: { eyebrow: 'CUENTA · PREFERENCIAS', title: 'Ajustes de cuenta.', description: 'Configura idioma, notificaciones y preferencias de visualización.' },
+  Perfil: { eyebrow: 'CUENTA', title: 'Tu perfil.', description: 'Edita tu nombre, país, bio y color de avatar.' },
+  Seguridad: { eyebrow: 'CUENTA · SEGURIDAD', title: 'Protege tu cuenta.', description: 'Gestiona 2FA, códigos de recuperación, correo y contraseña.' },
+  Ajustes: { eyebrow: 'CUENTA · PREFERENCIAS', title: 'Ajustes de cuenta.', description: 'Notificaciones, privacidad en pantalla, reglas anti-abuso y eliminación de cuenta.' },
   Mercados: { eyebrow: 'MERCADOS SPOT', title: 'Mercados cripto', description: 'Precios y velas de mercado en vivo desde Binance Spot.' },
   Earn: { eyebrow: 'CENTRO DE RECOMPENSAS', title: 'Gana a tu ritmo.', description: 'Tareas internas verificables y actividades de proveedores, claramente diferenciadas.' },
   Swap: { eyebrow: 'CONVERSIÓN', title: 'Un activo. Otro activo.', description: 'Consulta una cotización de demostración. Las operaciones reales todavía no están habilitadas.' },
@@ -107,6 +112,13 @@ export function DashboardPrototype() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [accountEmail, setAccountEmail] = useState('Cuenta')
   const [accountName, setAccountName] = useState('')
+  const { prefs } = useAccountPrefs()
+  const [balancePrefApplied, setBalancePrefApplied] = useState(false)
+  useFaucetReminder(prefs.notifyFaucetReady)
+  useEffect(() => {
+    if (balancePrefApplied || !prefs.hideBalance) return
+    void Promise.resolve().then(() => { setBalanceVisible(false); setBalancePrefApplied(true) })
+  }, [prefs.hideBalance, balancePrefApplied])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -180,7 +192,7 @@ export function DashboardPrototype() {
           <span className="brand-mark"><span /></span><span className="brand-word">faucet<span className="brand-period">.</span></span><span className="brand-beta">BETA</span>
         </a>
         <button className="workspace-switch" aria-label="Abrir perfil de cuenta" onClick={() => selectPage('Perfil')}>
-          <span className="workspace-avatar">{accountEmail.slice(0, 1).toUpperCase()}</span><span className="workspace-copy"><strong>Mi espacio</strong><small>Cuenta personal</small></span><ChevronDown size={15} />
+          <span className="workspace-avatar" style={prefs.avatarColor ? { background: prefs.avatarColor, color: '#0b1220' } : undefined}>{accountEmail.slice(0, 1).toUpperCase()}</span><span className="workspace-copy"><strong>Mi espacio</strong><small>Cuenta personal</small></span><ChevronDown size={15} />
         </button>
         <nav className="side-nav" aria-label="Navegación del dashboard">
           {dashboardNav.map((group) => <div className="nav-group" key={group.group}>
@@ -190,7 +202,7 @@ export function DashboardPrototype() {
         </nav>
         <div className="sidebar-bottom">
           <div className="safety-card"><div className="safety-icon"><ShieldCheck size={16} /></div><div><strong>Acceso protegido</strong><small>{supabase ? 'Sesión Supabase' : 'Vista local'}</small></div><span className="status-dot" /></div>
-          <button className="profile-row" onClick={() => void signOut()}><span className="profile-avatar">{accountEmail.slice(0, 2).toUpperCase()}</span><span className="profile-copy"><strong>{accountEmail}</strong><small>{supabase ? 'Cerrar sesión' : 'Cuenta demo'}</small></span><ChevronDown size={15} /></button>
+          <button className="profile-row" onClick={() => void signOut()}><span className="profile-avatar" style={prefs.avatarColor ? { background: prefs.avatarColor, color: '#0b1220' } : undefined}>{accountEmail.slice(0, 2).toUpperCase()}</span><span className="profile-copy"><strong>{accountEmail}</strong><small>{supabase ? 'Cerrar sesión' : 'Cuenta demo'}</small></span><ChevronDown size={15} /></button>
         </div>
       </aside>
 
@@ -221,7 +233,7 @@ export function DashboardPrototype() {
                 <div className="chart-periods" role="group" aria-label="Periodo del gráfico">{(Object.keys(chartSets) as Array<keyof typeof chartSets>).map((item) => <button key={item} className={period === item ? 'period-active' : ''} onClick={() => setPeriod(item)}>{item}</button>)}</div>
                 <div className="balance-actions"><button className="action-primary" onClick={() => openAction('Depositar')}><ArrowDownLeft size={16} />Depositar</button><button className="action-secondary" onClick={() => openAction('Retirar')}><ArrowUpRight size={16} />Retirar</button><button className="action-secondary" onClick={() => selectPage('Swap')}><ArrowLeftRight size={16} />Swap</button><button className="action-more" aria-label="Más opciones" onClick={() => openAction('Más opciones')}><Plus size={18} /></button></div>
               </div>
-              <EarnSummary onNavigate={selectPage} />
+              <EarnSummary onNavigate={selectPage} hidden={!balanceVisible} />
             </section>
 
             <section className="portfolio-section"><div className="section-header"><div><span className="section-kicker">TUS ACTIVOS · DEMO</span><h2>Portafolio</h2></div><button className="view-all" onClick={() => selectPage('Cartera')}>Ver activos <ArrowRight size={14} /></button></div><AssetPortfolio balanceVisible={balanceVisible} onSelect={setSelectedAsset} /></section>
@@ -413,7 +425,7 @@ const EARN_TASKS = [
   },
 ] as const
 
-function EarnSummary({ onNavigate }: { onNavigate: (page: string) => void }) {
+function EarnSummary({ onNavigate, hidden = false }: { onNavigate: (page: string) => void; hidden?: boolean }) {
   const [points, setPoints] = useState<number | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
   const [errorMessage, setErrorMessage] = useState(() => supabase ? '' : 'Configura Supabase para consultar recompensas.')
@@ -435,7 +447,7 @@ function EarnSummary({ onNavigate }: { onNavigate: (page: string) => void }) {
 
   return <div className="earn-panel">
     <div className="panel-heading"><div><span className="section-kicker">RECOMPENSAS</span><h2>Tus puntos</h2></div><button className="text-link" onClick={() => onNavigate('Earn')}>Ver tareas <ArrowRight size={14} /></button></div>
-    <div className="earn-total"><span>Saldo promocional interno</span><strong>{loading ? '…' : points === null ? '—' : points.toLocaleString('es-ES')} <small>PTS</small></strong></div>
+    <div className="earn-total"><span>Saldo promocional interno</span><strong>{loading ? '…' : points === null ? '—' : hidden ? '•••' : points.toLocaleString('es-ES')} <small>PTS</small></strong></div>
     <div className="earn-progress-label"><span>Sin valor monetario ni retiros</span><button className="text-link" onClick={() => onNavigate('Historial')}>Historial</button></div>
     <div className="earn-list">
       <button className="earn-row" onClick={() => onNavigate('Faucets')}><span className="earn-brand blue">◉</span><span className="earn-info"><strong>Faucet diario</strong><small>Una reclamación cada 24 horas</small></span><span className="earn-reward">+10<small>PTS</small></span><ArrowRight className="earn-arrow" size={14} /></button>
@@ -498,7 +510,8 @@ function SectionView({ page, onAction, onNavigate, onAssetSelect, earnFilter, se
       : page === 'Desarrolladores' || page === 'API' ? <div className="developer-panel"><div className="developer-icon"><Code2 size={24} /></div><div><span className="section-kicker">API DE PAGOS</span><h2>Integra. Prueba. Lanza.</h2><p>Consulta documentación, crea credenciales de sandbox y simula webhooks cuando el portal esté conectado.</p><div className="developer-actions"><button className="action-primary" onClick={() => onAction('Documentación API')}><Code2 size={15} />Ver documentación</button><button className="action-secondary" onClick={() => onAction('Crear API key')}><Plus size={15} />Crear API key</button></div></div><div className="code-preview"><span><i /> SANDBOX · EJEMPLO</span><pre>{`POST /v1/payouts\nAuthorization: Bearer demo_key\n\n{\n  "asset": "USDT",\n  "amount": "1.50"\n}`}</pre></div></div>
       : page === 'Afiliados' ? <ReferralPanel />
       : page === 'Perfil' ? <AccountProfile />
-        : page === 'Seguridad' ? <SecurityCenter />
+        : page === 'Seguridad' ? <><SecurityCenter /><AccountAccess /></>
+          : page === 'Ajustes' ? <AccountSettings />
       : <ModuleOverview page={page} onAction={onAction} />}
   </section>
 }
@@ -512,9 +525,6 @@ const moduleOptions: Record<string, { metric: string; value: string; caption: st
   Direcciones: { metric: 'DIRECCIONES GUARDADAS', value: '0', caption: 'ninguna en esta vista demo', rows: [{ title: 'Lista de permitidas', detail: 'Guarda direcciones de retiro verificadas', value: 'Vacía' }, { title: 'Red correcta', detail: 'La red de destino debe coincidir', value: 'Importante' }] },
   Lotería: { metric: 'SORTEOS ACTIVOS', value: '3', caption: 'muestra ilustrativa', rows: [{ title: 'Sorteo semanal', detail: 'BTC · Cierra en 2 d 14 h', value: 'Ver reglas' }, { title: 'Premio comunitario', detail: 'DOGE · Cierra en 5 d', value: 'Ver reglas' }] },
   Staking: { metric: 'RENDIMIENTO', value: 'Variable', caption: 'no garantizado · depende del protocolo', rows: [{ title: 'FEY flexible', detail: 'Sin periodo fijo · riesgos del token', value: 'Más información' }, { title: 'Yield DeFi', detail: 'Estrategia externa · riesgo de contrato', value: 'No conectado' }] },
-  Perfil: { metric: 'CUENTA', value: 'Demo', caption: 'perfil no conectado', rows: [{ title: 'Información personal', detail: 'Nombre visible y correo', value: 'Editar' }, { title: 'Preferencias', detail: 'Idioma y moneda de visualización', value: 'Configurar' }] },
-  Seguridad: { metric: 'PROTECCIÓN', value: '2FA', caption: 'ejemplo visual', rows: [{ title: 'Autenticación de dos factores', detail: 'Segundo factor para iniciar sesión', value: 'Revisar' }, { title: 'Sesiones activas', detail: 'Cierra sesiones que no reconozcas', value: '0 activas' }, { title: 'Historial de acceso', detail: 'Actividad reciente de cuenta', value: 'Consultar' }] },
-  Ajustes: { metric: 'PREFERENCIAS', value: '3', caption: 'controles disponibles', rows: [{ title: 'Idioma', detail: 'Español', value: 'Cambiar' }, { title: 'Moneda de visualización', detail: 'USD', value: 'Cambiar' }, { title: 'Notificaciones', detail: 'Correo y alertas de cuenta', value: 'Configurar' }] },
 }
 
 type RewardLedgerEntry = {
@@ -767,9 +777,15 @@ function EarnTasks({ onNavigate }: { onNavigate: (page: string) => void }) {
   </section>
 }
 
+const FAUCET_BASE_REWARD = 10
+const FAUCET_MAX_BONUS_DAYS = 6
+const faucetReward = (streak: number) => FAUCET_BASE_REWARD + 2 * Math.min(Math.max(streak - 1, 0), FAUCET_MAX_BONUS_DAYS)
+
 function DailyFaucet() {
   const [points, setPoints] = useState<number | null>(null)
   const [lastClaimAt, setLastClaimAt] = useState<string | null>(null)
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [hasSession, setHasSession] = useState(false)
@@ -799,13 +815,20 @@ function DailyFaucet() {
         if (active) setHasSession(true)
 
         const [accountResult, claimResult] = await Promise.all([
-          supabase.from('daily_faucet_accounts').select('points').maybeSingle(),
+          supabase.from('daily_faucet_accounts').select('points, streak, best_streak').maybeSingle(),
           supabase.from('daily_faucet_claims').select('claimed_at').order('claimed_at', { ascending: false }).limit(1).maybeSingle(),
         ])
-        if (accountResult.error) throw accountResult.error
+        let account = accountResult.data as { points: number; streak?: number; best_streak?: number } | null
+        if (accountResult.error) {
+          const legacy = await supabase.from('daily_faucet_accounts').select('points').maybeSingle()
+          if (legacy.error) throw legacy.error
+          account = legacy.data
+        }
         if (claimResult.error) throw claimResult.error
         if (!active) return
-        setPoints(accountResult.data?.points ?? 0)
+        setPoints(account?.points ?? 0)
+        setStreak(account?.streak ?? 0)
+        setBestStreak(account?.best_streak ?? 0)
         setLastClaimAt(claimResult.data?.claimed_at ?? null)
       } catch {
         if (active) setErrorMessage('No se pudo cargar el saldo o el historial del faucet. Revisa la migración de Supabase e inténtalo de nuevo.')
@@ -823,9 +846,13 @@ function DailyFaucet() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const nextClaimAt = lastClaimAt ? Date.parse(lastClaimAt) + 24 * 60 * 60 * 1000 : 0
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const nextClaimAt = lastClaimAt ? Date.parse(lastClaimAt) + DAY_MS : 0
   const cooldownMs = Math.max(0, nextClaimAt - now)
   const available = cooldownMs === 0
+  const streakAlive = lastClaimAt !== null && now > 0 && now - Date.parse(lastClaimAt) < 2 * DAY_MS
+  const activeStreak = streakAlive ? streak : 0
+  const nextReward = faucetReward(activeStreak + 1)
   const countdown = `${Math.floor(cooldownMs / 3_600_000).toString().padStart(2, '0')}:${Math.floor((cooldownMs % 3_600_000) / 60_000).toString().padStart(2, '0')}:${Math.floor((cooldownMs % 60_000) / 1000).toString().padStart(2, '0')}`
 
   const claimReward = async () => {
@@ -840,11 +867,20 @@ function DailyFaucet() {
       if (!result) throw new Error('El servidor no devolvió el estado de la recompensa.')
       setPoints(result.balance)
       setLastClaimAt(result.last_claim_at)
+      if (typeof result.streak === 'number') {
+        setStreak(result.streak)
+        setBestStreak((best) => Math.max(best, result.streak))
+      }
       setFeedback(result.claimed
-        ? `¡Recompensa acreditada! +${result.reward} puntos internos.`
+        ? `¡Recompensa acreditada! +${result.reward} puntos internos${result.streak > 1 ? ` · racha de ${result.streak} días` : ''}.`
         : 'Esta cuenta ya reclamó la recompensa. Vuelve cuando termine el contador.')
-    } catch {
-      setErrorMessage('No se pudo reclamar la recompensa. Comprueba la conexión e inténtalo de nuevo.')
+      if (result.claimed) window.dispatchEvent(new Event(CLAIM_EVENT))
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code
+      const message = error instanceof Error ? error.message : ''
+      setErrorMessage(code === '22023' || message.includes('Email confirmation required')
+        ? 'Confirma tu correo electrónico para poder reclamar. Revisa tu bandeja de entrada y el spam.'
+        : 'No se pudo reclamar la recompensa. Comprueba la conexión e inténtalo de nuevo.')
     } finally {
       setBusy(false)
     }
@@ -856,13 +892,18 @@ function DailyFaucet() {
       <div className="daily-faucet-copy">
         <span className="section-kicker">RECOMPENSA CADA 24 HORAS</span>
         <h2>Reclama tus puntos diarios.</h2>
-        <p>Una recompensa fija, protegida por tu cuenta y acreditada en el servidor.</p>
+        <p>Reclama cada día para mantener tu racha: 10 puntos y +2 por cada día seguido, hasta 22. Si pasan más de 48 horas, la racha vuelve a empezar.</p>
       </div>
       <div className="daily-faucet-balance"><span>TU SALDO</span><strong>{points === null ? '—' : points.toLocaleString('es-ES')}</strong><small>puntos internos</small></div>
     </div>
+    <div className="streak-row" aria-label="Racha de reclamaciones">
+      <div><span>RACHA ACTUAL</span><strong>{activeStreak} <small>{activeStreak === 1 ? 'día' : 'días'}</small></strong></div>
+      <div><span>MEJOR RACHA</span><strong>{bestStreak} <small>{bestStreak === 1 ? 'día' : 'días'}</small></strong></div>
+      <div><span>PRÓXIMA RECOMPENSA</span><strong>+{nextReward} <small>PTS</small></strong></div>
+    </div>
     <div className="daily-faucet-action">
-      <div><strong>{loading ? 'Comprobando disponibilidad…' : available ? 'Tu recompensa está lista' : `Próxima recompensa en ${countdown}`}</strong><small>10 puntos internos · una reclamación cada 24 horas</small></div>
-      <button className="action-primary" disabled={loading || busy || !hasSession || !available} onClick={() => void claimReward()}>{busy ? 'Acreditando…' : available ? 'Reclamar 10 puntos' : 'Recompensa reclamada'}<Gift size={15} /></button>
+      <div><strong>{loading ? 'Comprobando disponibilidad…' : available ? 'Tu recompensa está lista' : `Próxima recompensa en ${countdown}`}</strong><small>{nextReward} puntos internos · una reclamación cada 24 horas · requiere correo verificado</small></div>
+      <button className="action-primary" disabled={loading || busy || !hasSession || !available} onClick={() => void claimReward()}>{busy ? 'Acreditando…' : available ? `Reclamar ${nextReward} puntos` : 'Recompensa reclamada'}<Gift size={15} /></button>
     </div>
     {!hasSession && !loading && <p className="daily-faucet-message" role="status">{errorMessage}<button className="text-link" onClick={() => window.location.assign('/?login=1')}>Iniciar sesión <ArrowRight size={13} /></button></p>}
     {hasSession && errorMessage && <p className="profile-feedback-error" role="alert">{errorMessage}</p>}
@@ -885,43 +926,6 @@ function ModuleOverview({ page, onAction }: { page: string; onAction: (action: s
     </div>
     <aside className="module-summary-panel"><span className="section-kicker">RESUMEN</span><strong>{module.value}</strong><small>{module.metric}</small><p>{module.caption}</p><div className="module-summary-foot"><span className="market-status-dot" /> Servicio en preparación</div></aside>
   </div>
-}
-
-function AccountProfile() {
-  const [email, setEmail] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [loading, setLoading] = useState(Boolean(supabase))
-  const [saving, setSaving] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-
-  useEffect(() => {
-    let active = true
-    if (!supabase) return
-    void supabase.auth.getUser().then(({ data, error }) => {
-      if (!active) return
-      if (error) setErrorMessage('No se pudo cargar el perfil.')
-      setEmail(data.user?.email ?? '')
-      const metadataName = data.user?.user_metadata?.display_name
-      setDisplayName(typeof metadataName === 'string' ? metadataName : '')
-      setLoading(false)
-    })
-    return () => { active = false }
-  }, [])
-
-  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!supabase) return setErrorMessage('Supabase no está configurado.')
-    setSaving(true)
-    setErrorMessage('')
-    setSuccessMessage('')
-    const { error } = await supabase.auth.updateUser({ data: { display_name: displayName.trim() || null } })
-    if (error) setErrorMessage('No se pudo guardar el nombre. Inténtalo de nuevo.')
-    else setSuccessMessage('Nombre actualizado.')
-    setSaving(false)
-  }
-
-  return <div className="account-profile"><form className="profile-form" onSubmit={(event) => void saveProfile(event)}><div><span className="section-kicker">IDENTIDAD</span><h2>Tu perfil</h2><p>El nombre se guarda en los metadatos de tu cuenta de Supabase.</p></div><label><span>Correo electrónico</span><input type="email" value={email} readOnly placeholder={loading ? 'Cargando…' : 'No disponible'} /></label><label><span>Nombre visible</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={50} placeholder="Cómo te llamamos" disabled={loading || saving || !supabase} /></label>{errorMessage && <p className="profile-feedback profile-feedback-error" role="alert">{errorMessage}</p>}{successMessage && <p className="profile-feedback" role="status">{successMessage}</p>}<button className="action-primary" type="submit" disabled={loading || saving || !supabase}>{saving ? 'Guardando…' : 'Guardar cambios'}</button></form><aside className="profile-note"><ShieldCheck size={18} /><strong>Tu correo no se cambia desde este formulario</strong><p>Para modificar la dirección de acceso hará falta un flujo de verificación específico.</p></aside></div>
 }
 
 function SecurityCenter() {
