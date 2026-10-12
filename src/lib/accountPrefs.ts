@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
 
 export type AccountPrefs = {
@@ -8,6 +9,7 @@ export type AccountPrefs = {
   avatarColor: string
   notifyFaucetReady: boolean
   hideBalance: boolean
+  showOnLeaderboard: boolean
 }
 
 export const DEFAULT_PREFS: AccountPrefs = {
@@ -17,6 +19,7 @@ export const DEFAULT_PREFS: AccountPrefs = {
   avatarColor: '',
   notifyFaucetReady: false,
   hideBalance: false,
+  showOnLeaderboard: true,
 }
 
 export const AVATAR_COLORS = ['#6eafff', '#5ad1a4', '#f2b84b', '#f27d6b', '#b48cff', '#ff8fc2', '#7fd4e8', '#9aa7b8']
@@ -34,9 +37,16 @@ export const PREFS_EVENT = 'faucet:prefs-changed'
 export const CLAIM_EVENT = 'faucet:claimed'
 
 type ProfileRow = { display_name: string | null; country: string | null; bio: string | null; avatar_color: string | null }
-type SettingsRow = { notify_faucet_ready: boolean; hide_balance: boolean }
+type SettingsRow = { notify_faucet_ready: boolean; hide_balance: boolean; show_on_leaderboard?: boolean }
 
 export type PrefsLoad = { prefs: AccountPrefs; schemaReady: boolean }
+
+async function loadSettingsRow(userId: string) {
+  if (!supabase) return { data: null, error: new Error('no client') }
+  const full = await supabase.from('user_settings').select('notify_faucet_ready, hide_balance, show_on_leaderboard').eq('user_id', userId).maybeSingle<SettingsRow>()
+  if (!full.error) return full
+  return supabase.from('user_settings').select('notify_faucet_ready, hide_balance').eq('user_id', userId).maybeSingle<SettingsRow>()
+}
 
 export async function loadAccountPrefs(): Promise<PrefsLoad> {
   if (!supabase) return { prefs: DEFAULT_PREFS, schemaReady: false }
@@ -48,7 +58,7 @@ export async function loadAccountPrefs(): Promise<PrefsLoad> {
 
   const [profileResult, settingsResult] = await Promise.all([
     supabase.from('profiles').select('display_name, country, bio, avatar_color').eq('id', userId).maybeSingle<ProfileRow>(),
-    supabase.from('user_settings').select('notify_faucet_ready, hide_balance').eq('user_id', userId).maybeSingle<SettingsRow>(),
+    loadSettingsRow(userId),
   ])
   const schemaReady = !profileResult.error && !settingsResult.error
   return {
@@ -60,6 +70,7 @@ export async function loadAccountPrefs(): Promise<PrefsLoad> {
       avatarColor: profileResult.data?.avatar_color ?? '',
       notifyFaucetReady: settingsResult.data?.notify_faucet_ready ?? false,
       hideBalance: settingsResult.data?.hide_balance ?? false,
+      showOnLeaderboard: settingsResult.data?.show_on_leaderboard ?? true,
     },
   }
 }
@@ -79,37 +90,32 @@ export async function saveProfile(values: Pick<AccountPrefs, 'displayName' | 'co
   window.dispatchEvent(new Event(PREFS_EVENT))
 }
 
-export async function saveSettings(values: Pick<AccountPrefs, 'notifyFaucetReady' | 'hideBalance'>) {
+export async function saveSettings(values: Partial<Pick<AccountPrefs, 'notifyFaucetReady' | 'hideBalance' | 'showOnLeaderboard'>>) {
   if (!supabase) throw new Error('Supabase no está configurado.')
   const { data: userData, error: userError } = await supabase.auth.getUser()
   if (userError || !userData.user) throw userError ?? new Error('Sesión no disponible.')
-  const { error } = await supabase.from('user_settings').upsert({
-    user_id: userData.user.id,
-    notify_faucet_ready: values.notifyFaucetReady,
-    hide_balance: values.hideBalance,
-  })
+  const row: Record<string, unknown> = { user_id: userData.user.id }
+  if (values.notifyFaucetReady !== undefined) row.notify_faucet_ready = values.notifyFaucetReady
+  if (values.hideBalance !== undefined) row.hide_balance = values.hideBalance
+  if (values.showOnLeaderboard !== undefined) row.show_on_leaderboard = values.showOnLeaderboard
+  const { error } = await supabase.from('user_settings').upsert(row)
   if (error) throw error
   window.dispatchEvent(new Event(PREFS_EVENT))
 }
 
 export function useAccountPrefs() {
-  const [state, setState] = useState<PrefsLoad & { loading: boolean }>({ prefs: DEFAULT_PREFS, schemaReady: true, loading: Boolean(supabase) })
-
-  const reload = useCallback(async () => {
-    try {
-      const result = await loadAccountPrefs()
-      setState({ ...result, loading: false })
-    } catch {
-      setState((current) => ({ ...current, schemaReady: false, loading: false }))
-    }
-  }, [])
+  const queryClient = useQueryClient()
+  const query = useQuery({ queryKey: ['prefs'], queryFn: loadAccountPrefs, enabled: Boolean(supabase), staleTime: 60_000 })
 
   useEffect(() => {
-    if (!supabase) return
-    void Promise.resolve().then(reload)
-    window.addEventListener(PREFS_EVENT, reload)
-    return () => window.removeEventListener(PREFS_EVENT, reload)
-  }, [reload])
+    const refresh = () => { void queryClient.invalidateQueries({ queryKey: ['prefs'] }) }
+    window.addEventListener(PREFS_EVENT, refresh)
+    return () => window.removeEventListener(PREFS_EVENT, refresh)
+  }, [queryClient])
 
-  return { ...state, reload }
+  return {
+    prefs: query.data?.prefs ?? DEFAULT_PREFS,
+    schemaReady: query.isError ? false : query.data?.schemaReady ?? true,
+    loading: query.isLoading,
+  }
 }

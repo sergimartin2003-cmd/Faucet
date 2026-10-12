@@ -1,4 +1,4 @@
-const CACHE_NAME = 'faucet-shell-v1'
+const CACHE_NAME = 'faucet-shell-v2'
 const APP_SHELL = ['/', '/site.webmanifest', '/pwa-icon.svg']
 
 self.addEventListener('install', (event) => {

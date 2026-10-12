@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { turnstileSiteKey } from '../lib/turnstile'
+import { useResolvedTheme } from '../lib/theme'
 
 type TurnstileApi = {
   render: (container: HTMLElement, options: Record<string, unknown>) => string
@@ -25,6 +26,7 @@ function loadScript() {
 
 export default function Captcha({ onToken }: { onToken: (token: string) => void }) {
   const container = useRef<HTMLDivElement>(null)
+  const theme = useResolvedTheme()
 
   useEffect(() => {
     if (!turnstileSiteKey || !container.current) return
@@ -35,7 +37,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
       if (cancelled || !window.turnstile) return
       widgetId = window.turnstile.render(element, {
         sitekey: turnstileSiteKey,
-        theme: 'dark',
+        theme,
         callback: (token: string) => onToken(token),
         'expired-callback': () => onToken(''),
         'error-callback': () => onToken(''),
@@ -45,7 +47,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
       cancelled = true
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId)
     }
-  }, [onToken])
+  }, [onToken, theme])
 
   if (!turnstileSiteKey) return null
   return <div className="captcha-box" ref={container} />

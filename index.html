@@ -1,15 +1,32 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#10120f" />
-    <meta name="description" content="Tu actividad cripto, en un solo lugar." />
-    <title>faucet. | Tu centro financiero</title>
+    <meta name="theme-color" content="#0a0c10" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Faucet: reclama puntos cada día, completa tareas, mantén tu racha y sube en la clasificación mensual. Puntos promocionales sin valor monetario." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Faucet" />
+    <meta property="og:title" content="Faucet · Recompensas diarias" />
+    <meta property="og:description" content="Reclama puntos cada día, completa tareas y sube en la clasificación mensual." />
+    <meta name="twitter:card" content="summary" />
+    <title>Faucet · Recompensas diarias</title>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('faucet:theme') || 'system';
+          var light = pref === 'light' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
+          document.documentElement.dataset.theme = light ? 'light' : 'dark';
+          if (light) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f6f7f9');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
+    <noscript>Faucet necesita JavaScript para funcionar.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

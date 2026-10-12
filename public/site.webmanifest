@@ -1,17 +1,13 @@
 {
-  "name": "Faucet Protocol",
+  "name": "Faucet",
   "short_name": "Faucet",
-  "description": "Tu actividad cripto, en un solo lugar.",
-  "start_url": "/",
+  "description": "Recompensas diarias, tareas y clasificación mensual.",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#10120f",
-  "theme_color": "#10120f",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
   "icons": [
-    {
-      "src": "/pwa-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

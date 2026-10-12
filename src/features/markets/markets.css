@@ -1,0 +1,61 @@
+.mk-page { display: grid; gap: var(--space-4); min-width: 0; }
+
+/* Chart card */
+.mk-chart-card { overflow: hidden; min-width: 0; }
+.mk-chart-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3) var(--space-4); padding: var(--space-4) var(--space-5); }
+.mk-selected { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-5); min-width: 0; }
+.mk-selected-name { display: grid; gap: 2px; }
+.mk-selected-name strong { font-size: var(--text-lg); font-weight: 650; letter-spacing: -.01em; line-height: 1.2; }
+.mk-selected-price { display: flex; align-items: center; gap: var(--space-3); }
+.mk-price { font-size: var(--text-xl); font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.mk-price small { margin-left: 2px; color: var(--text-muted); font-size: var(--text-sm); font-weight: 500; letter-spacing: 0; }
+.mk-tabs .tab[aria-pressed='true'] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+.mk-chart-wrap { position: relative; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+.mk-chart { height: 380px; width: 100%; }
+.mk-chart-overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: var(--surface); }
+.mk-chart-skeleton { width: 100%; height: 100%; display: flex; align-items: flex-end; gap: var(--space-2); padding: var(--space-8) var(--space-5) var(--space-6); }
+.mk-chart-skeleton .skeleton { flex: 1; }
+.mk-chart-foot { padding: var(--space-3) var(--space-5); color: var(--text-faint); font-size: var(--text-xs); }
+
+/* Markets list */
+.mk-list-card { overflow: hidden; min-width: 0; }
+.mk-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
+.mk-search { position: relative; flex: 1 1 220px; max-width: 320px; }
+.mk-search svg { position: absolute; top: 50%; left: var(--space-3); transform: translateY(-50%); color: var(--text-faint); pointer-events: none; }
+.mk-search .input { padding-left: 34px; }
+.mk-refresh { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+.mk-updated { font-size: var(--text-xs); white-space: nowrap; }
+.mk-alert { padding: var(--space-3) var(--space-5) 0; }
+.mk-scroll { max-height: 560px; overflow: auto; overscroll-behavior: contain; }
+.mk-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+.mk-table th.num { text-align: right; }
+.mk-sort { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit; }
+.mk-sort:hover, .mk-sort-active { color: var(--text); }
+.mk-sort svg { color: var(--text-faint); }
+.mk-sort-active svg { color: var(--accent); }
+.mk-row { cursor: pointer; }
+.mk-row[data-selected='true'], .mk-row[data-selected='true']:hover { background: var(--accent-soft); }
+.mk-pair { display: inline-flex; align-items: baseline; padding: 0; border: 0; background: none; font-size: var(--text-base); }
+.mk-base { font-weight: 600; color: var(--text); }
+.mk-quote { color: var(--text-faint); font-size: var(--text-sm); }
+.mk-pair[aria-current='true'] .mk-base { color: var(--accent); }
+.mk-vol-inline { display: none; color: var(--text-faint); font-size: var(--text-xs); }
+.mk-up { color: var(--success); }
+.mk-down { color: var(--danger); }
+.mk-flat { color: var(--text-muted); }
+.mk-list-foot { padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border); font-size: var(--text-xs); }
+.mk-note { display: flex; align-items: center; gap: var(--space-2); color: var(--text-faint); font-size: var(--text-xs); }
+.mk-note svg { flex: none; }
+
+@media (max-width: 720px) {
+  .mk-chart-head, .mk-toolbar { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .mk-chart-foot, .mk-list-foot { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .mk-alert { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .mk-chart { height: 300px; }
+  .mk-search { max-width: none; flex-basis: 100%; }
+  .mk-refresh { margin-left: 0; flex: 1; justify-content: space-between; }
+  .mk-col-volume { display: none; }
+  .mk-vol-inline { display: block; }
+  .mk-table th, .mk-table td { padding: var(--space-3); }
+  .mk-scroll { max-height: 480px; }
+}

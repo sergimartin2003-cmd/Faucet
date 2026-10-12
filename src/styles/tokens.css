@@ -1,0 +1,67 @@
+:root {
+  --font: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px;
+
+  --radius-sm: 6px; --radius: 8px; --radius-lg: 12px; --radius-full: 999px;
+
+  --text-xs: 12px; --text-sm: 13px; --text-base: 14px; --text-md: 16px;
+  --text-lg: 18px; --text-xl: 22px; --text-2xl: 28px; --text-3xl: 36px; --text-4xl: 52px;
+
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --sidebar-width: 248px;
+  --topbar-height: 56px;
+  color-scheme: dark;
+}
+
+:root, :root[data-theme='dark'] {
+  --bg: #0a0c10;
+  --surface: #10131a;
+  --surface-2: #151922;
+  --surface-3: #1b2030;
+  --border: #232a38;
+  --border-strong: #323b4d;
+  --text: #e8ebf1;
+  --text-muted: #9aa3b5;
+  --text-faint: #6c7589;
+  --accent: #5b8def;
+  --accent-hover: #78a2f5;
+  --accent-soft: rgba(91, 141, 239, .14);
+  --accent-fg: #ffffff;
+  --success: #3fb68b;
+  --success-soft: rgba(63, 182, 139, .14);
+  --warning: #e0a23a;
+  --warning-soft: rgba(224, 162, 58, .14);
+  --danger: #ef5b61;
+  --danger-soft: rgba(239, 91, 97, .14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .25);
+  --overlay: rgba(4, 6, 10, .68);
+  --heat-0: #151a24; --heat-1: #1e3a6a; --heat-2: #2f5fb8; --heat-3: #5b8def;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-3: #e8ebf0;
+  --border: #e1e5eb;
+  --border-strong: #cdd3dd;
+  --text: #11151c;
+  --text-muted: #566074;
+  --text-faint: #7d879b;
+  --accent: #3b6ae0;
+  --accent-hover: #2f58c4;
+  --accent-soft: rgba(59, 106, 224, .1);
+  --accent-fg: #ffffff;
+  --success: #17895f;
+  --success-soft: rgba(23, 137, 95, .1);
+  --warning: #a86a0c;
+  --warning-soft: rgba(168, 106, 12, .1);
+  --danger: #cf3038;
+  --danger-soft: rgba(207, 48, 56, .08);
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .08);
+  --overlay: rgba(16, 21, 31, .45);
+  --heat-0: #eceff4; --heat-1: #c3d4f7; --heat-2: #7fa2ee; --heat-3: #3b6ae0;
+  color-scheme: light;
+}
