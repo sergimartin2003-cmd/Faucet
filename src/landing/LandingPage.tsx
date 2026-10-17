@@ -8,6 +8,7 @@ import Gauge from '../ui/Gauge'
 import PublicLayout from './PublicLayout'
 import { useAuthDialog } from './auth'
 import { t } from '../lib/i18n'
+import { siteName } from '../lib/site'
 
 const steps = () => [
   { title: t('Crea tu cuenta'), text: t('Regístrate con tu correo y verifícalo. Es gratis y no hace falta instalar nada.') },
@@ -96,7 +97,7 @@ function HeroVisual() {
 function LandingContent() {
   const { openAuth, signedInEmail } = useAuthDialog()
 
-  useEffect(() => { document.title = t('Faucet · Encuestas y ofertas pagadas en crypto') }, [])
+  useEffect(() => { document.title = t('{site} · Encuestas y ofertas pagadas en crypto', { site: siteName }) }, [])
 
   const cta = (size: 'btn-lg' | 'btn-md' = 'btn-lg') => signedInEmail
     ? <Link className={`btn btn-primary ${size}`} to="/dashboard">{t('Ir al panel')} <ArrowRight size={16} /></Link>

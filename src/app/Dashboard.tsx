@@ -3,6 +3,7 @@ import { ArrowUpFromLine, LogOut, Eye, EyeOff, Menu, Settings, User as UserIcon,
 import { supabase } from '../lib/supabase'
 import { navigate, usePathname } from '../lib/router'
 import Link from '../lib/Link'
+import { siteName } from '../lib/site'
 import { useAccountPrefs } from '../lib/accountPrefs'
 import { formatPoints } from '../lib/game'
 import { useIsAdmin } from '../lib/queries'
@@ -76,7 +77,7 @@ function Shell() {
 
   const title = activeItem?.title ?? t('No encontrado')
   useEffect(() => {
-    document.title = `${title} · Faucet`
+    document.title = `${title} · ${siteName}`
   }, [title])
 
   useEffect(() => {
@@ -93,7 +94,7 @@ function Shell() {
   return <div className={`shell${menuOpen ? ' sidebar-open' : ''}`}>
     <aside className="sidebar" aria-label={t('Navegación principal')}>
       <div className="row-between" style={{ flexWrap: 'nowrap' }}>
-        <Link to="/" className="brand"><img className="brand-mark" src="/favicon.svg" alt="" />Faucet</Link>
+        <Link to="/" className="brand"><img className="brand-mark" src="/favicon.svg" alt="" />{siteName}</Link>
         <button className="icon-button menu-button" aria-label={t('Cerrar menú')} onClick={() => setMenuOpen(false)}><X size={18} /></button>
       </div>
       <nav className="nav">

@@ -369,12 +369,12 @@ const PRIVACY_EN: Section[] = [
 
 const CONTENT = {
   es: {
-    terms: { title: 'Términos de uso', docTitle: 'Términos de uso · Faucet', intro: 'Estas condiciones regulan el uso de la aplicación.', sections: TERMS },
-    privacy: { title: 'Política de privacidad', docTitle: 'Política de privacidad · Faucet', intro: 'Qué datos tratamos, por qué y cómo puedes controlarlos.', sections: PRIVACY },
+    terms: { title: 'Términos de uso', docTitle: `Términos de uso · ${siteName}`, intro: 'Estas condiciones regulan el uso de la aplicación.', sections: TERMS },
+    privacy: { title: 'Política de privacidad', docTitle: `Política de privacidad · ${siteName}`, intro: 'Qué datos tratamos, por qué y cómo puedes controlarlos.', sections: PRIVACY },
   },
   en: {
-    terms: { title: 'Terms of use', docTitle: 'Terms of use · Faucet', intro: 'These terms govern the use of the app.', sections: TERMS_EN },
-    privacy: { title: 'Privacy policy', docTitle: 'Privacy policy · Faucet', intro: 'What data we process, why, and how you can control it.', sections: PRIVACY_EN },
+    terms: { title: 'Terms of use', docTitle: `Terms of use · ${siteName}`, intro: 'These terms govern the use of the app.', sections: TERMS_EN },
+    privacy: { title: 'Privacy policy', docTitle: `Privacy policy · ${siteName}`, intro: 'What data we process, why, and how you can control it.', sections: PRIVACY_EN },
   },
 }
 

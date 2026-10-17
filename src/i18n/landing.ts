@@ -96,7 +96,7 @@ export const EN_LANDING: Record<string, string> = {
   'Retiro 5 $ USDT': '$5 USDT withdrawal',
   'Nivel 3': 'Level 3',
   'Oferta +1.200': 'Offer +1,200',
-  'Faucet · Encuestas y ofertas pagadas en crypto': 'Faucet · Surveys and offers paid in crypto',
+  '{site} · Encuestas y ofertas pagadas en crypto': '{site} · Surveys and offers paid in crypto',
   'Ir al panel': 'Go to dashboard',
   'Crear cuenta gratis': 'Create free account',
   'Iniciar sesión': 'Sign in',

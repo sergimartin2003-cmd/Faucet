@@ -1,13 +1,18 @@
 {
-  "name": "Faucet",
-  "short_name": "Faucet",
-  "description": "Recompensas diarias, tareas y clasificación mensual.",
+  "name": "FaucetFree",
+  "short_name": "FaucetFree",
+  "description": "Encuestas y ofertas pagadas en crypto, y faucets propias con FaucetPay.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0a0c10",
   "theme_color": "#0a0c10",
   "icons": [
-    { "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }

@@ -1,4 +1,4 @@
-export const siteName = 'Faucet'
+export const siteName = 'FaucetFree'
 export const contactEmail = import.meta.env.VITE_CONTACT_EMAIL?.trim() || undefined
 
 // Third-party monetization, active only when configured.

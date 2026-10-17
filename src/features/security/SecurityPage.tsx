@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Badge, Button, Card, CardHeader, Dialog, PageHeader, Skeleton } from '../../ui'
 import { useToast } from '../../ui/toastContext'
 import { supabase } from '../../lib/supabase'
-import { siteOrigin } from '../../lib/site'
+import { siteName, siteOrigin } from '../../lib/site'
 import { errorCode } from '../../lib/queries'
 import { useSessionUser } from '../../app/sessionContext'
 import { t } from '../../lib/i18n'
@@ -67,7 +67,7 @@ function TwoFactorCard() {
     setBusy(true)
     setError('')
     try {
-      const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Faucet', issuer: 'Faucet' })
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: siteName, issuer: siteName })
       if (enrollError) throw enrollError
       if (data.type !== 'totp') throw new Error('totp')
       setQr(data.totp.qr_code)
@@ -128,7 +128,7 @@ function TwoFactorCard() {
       const { error: stepError } = await supabase.auth.mfa.challengeAndVerify({ factorId: verified[0].id, code: stepUp })
       if (stepError) throw stepError
       const hasCodes = (recovery.data ?? 0) > 0
-      const result = hasCodes ? await supabase.auth.mfa.recoveryCodes.regenerate() : await supabase.auth.mfa.recoveryCodes.generate({ friendlyName: 'Faucet' })
+      const result = hasCodes ? await supabase.auth.mfa.recoveryCodes.regenerate() : await supabase.auth.mfa.recoveryCodes.generate({ friendlyName: siteName })
       if (result.error) throw result.error
       setCodes(result.data.codes)
       setRegenerating(false)
