@@ -1,0 +1,150 @@
+import { useMemo, useState } from 'react'
+import { Copy, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Alert, Button, Card, CardHeader, PageHeader, Skeleton } from '../../ui'
+import { useToast } from '../../ui/toastContext'
+import {
+  GAME_LABELS, ROULETTE_REDS, SLOT_ICONS, cardInfo, deriveOutcome, formatMultiplier, sha256Hex,
+  type CasinoGame, type SlotSymbol,
+} from '../../lib/casino'
+import { casinoErrorMessage, useFairness, useRevealedSeeds, useRotateSeed } from './api'
+import './casino.css'
+
+const card = (n: number) => { const c = cardInfo(n); return `${c.rank}${c.suit}` }
+
+function describe(game: CasinoGame, outcome: Awaited<ReturnType<typeof deriveOutcome>>) {
+  const o = outcome as Record<string, unknown>
+  switch (game) {
+    case 'dice': return `Tirada: ${Number(o.roll).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    case 'limbo':
+    case 'crash': return `Multiplicador: ${formatMultiplier(Number(o.point))}`
+    case 'coinflip': return o.side === 'heads' ? 'Cara' : 'Cruz'
+    case 'roulette': { const n = Number(o.number); return `Número ${n} (${n === 0 ? 'verde' : ROULETTE_REDS.has(n) ? 'rojo' : 'negro'})` }
+    case 'slots': return (o.reels as SlotSymbol[]).map((s) => SLOT_ICONS[s]).join(' ')
+    case 'wheel': return `Casilla ${Number(o.segment) + 1} de 20`
+    case 'plinko': return `Casilla ${Number(o.bucket) + 1} · camino ${(o.path as number[]).map((step) => (step ? 'D' : 'I')).join('')}`
+    case 'keno': return `Números sorteados: ${(o.drawn as number[]).join(', ')}`
+    case 'mines': return `Minas en las casillas: ${(o.mines as number[]).map((m) => m + 1).sort((a, b) => a - b).join(', ')}`
+    case 'hilo': return `Cartas: ${(o.cards as number[]).slice(0, 12).map(card).join(' ')} …`
+    case 'blackjack': return `Tú: ${(o.player as number[]).map(card).join(' ')} · Crupier: ${(o.dealer as number[]).map(card).join(' ')} · siguientes: ${(o.cards as number[]).slice(4, 10).map(card).join(' ')} …`
+  }
+}
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const toast = useToast()
+  return <div className="field">
+    <span className="field-label">{label}</span>
+    <div className="bet-input" style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }}>
+      <input className="input mono-num" readOnly value={value} />
+      <button type="button" className="btn btn-secondary btn-sm" aria-label={`Copiar ${label}`} onClick={() => { void navigator.clipboard?.writeText(value); toast('Copiado', 'success') }}><Copy size={14} /></button>
+    </div>
+  </div>
+}
+
+export default function FairnessPage() {
+  const fairness = useFairness()
+  const revealed = useRevealedSeeds()
+  const rotate = useRotateSeed()
+  const toast = useToast()
+  const params = useMemo(() => new URLSearchParams(window.location.search), [])
+  const [clientSeed, setClientSeed] = useState('')
+
+  const [vGame, setVGame] = useState<CasinoGame>((params.get('game') as CasinoGame) || 'dice')
+  const [vServerInput, setVServer] = useState<string | null>(null)
+  const [vClient, setVClient] = useState(params.get('client') ?? '')
+  const [vNonce, setVNonce] = useState(params.get('nonce') ?? '0')
+  const [vRows, setVRows] = useState(Number(params.get('rows') ?? 16))
+  const [vMines, setVMines] = useState(Number(params.get('mines') ?? 3))
+  const [check, setCheck] = useState<{ hash: string; text: string } | null>(null)
+  const wantedHash = params.get('hash')
+  const pending = wantedHash && fairness.data?.server_seed_hash === wantedHash
+
+  const matched = wantedHash ? revealed.data?.find((seed) => seed.server_seed_hash === wantedHash) : undefined
+  const vServer = vServerInput ?? matched?.server_seed ?? ''
+
+  const verify = async () => {
+    const nonce = Number(vNonce)
+    if (!vServer || !vClient || !Number.isInteger(nonce) || nonce < 0) { toast('Completa la semilla del servidor, la del cliente y el nonce.', 'error'); return }
+    const outcome = await deriveOutcome(vGame, vServer, vClient, nonce, { rows: vRows, mines: vMines })
+    setCheck({ hash: await sha256Hex(vServer), text: describe(vGame, outcome) })
+  }
+
+  const doRotate = () => rotate.mutate(clientSeed, {
+    onSuccess: (result) => {
+      setClientSeed('')
+      setVServer(result.revealed.server_seed)
+      setVClient(result.revealed.client_seed)
+      toast('Semillas cambiadas. La anterior semilla del servidor ya es pública.', 'success')
+    },
+    onError: (error) => toast(casinoErrorMessage(error), 'error'),
+  })
+
+  return <>
+    <PageHeader title="Juego justo" description="Cada resultado sale de tus semillas y de un contador (nonce). Antes de jugar ves el hash de la semilla del servidor; al cambiarla, se revela y puedes comprobar cualquier jugada." />
+
+    <Card>
+      <CardHeader title="Semillas activas" description="La semilla del servidor permanece secreta hasta que la cambies. El nonce sube en 1 con cada jugada." />
+      {fairness.isLoading ? <Skeleton height={140} /> : fairness.isError ? <Alert tone="error">{casinoErrorMessage(fairness.error)}</Alert> : fairness.data && <div className="form-grid">
+        <CopyField label="Hash SHA-256 de la semilla del servidor" value={fairness.data.server_seed_hash} />
+        <CopyField label="Semilla del cliente" value={fairness.data.client_seed} />
+        <CopyField label="Próximo nonce" value={String(fairness.data.nonce)} />
+        <div className="field">
+          <label htmlFor="new-client-seed">Nueva semilla del cliente (opcional)</label>
+          <input id="new-client-seed" className="input mono-num" maxLength={64} placeholder="Déjala vacía para generar una aleatoria" value={clientSeed}
+            onChange={(event) => setClientSeed(event.target.value.replace(/[^A-Za-z0-9_-]/g, ''))} />
+          <span className="field-hint">Letras, números, guiones y guiones bajos. Las partidas abiertas de minas, hi-lo o blackjack deben terminar antes.</span>
+        </div>
+        <div className="form-actions"><Button variant="primary" loading={rotate.isPending} onClick={doRotate}><RefreshCw size={16} />Cambiar semillas y revelar la actual</Button></div>
+      </div>}
+    </Card>
+
+    <Card>
+      <CardHeader title="Verificar una jugada" description="El cálculo se hace en tu navegador con HMAC-SHA256, igual que en el servidor." />
+      {pending && <Alert tone="info">Esta jugada usa tu semilla actual, que aún es secreta. Cambia las semillas arriba para revelarla y poder verificarla.</Alert>}
+      <div className="form-grid" style={{ marginTop: pending ? 'var(--space-4)' : 0 }}>
+        <div className="field">
+          <label htmlFor="v-game">Juego</label>
+          <select id="v-game" className="select" value={vGame} onChange={(event) => setVGame(event.target.value as CasinoGame)}>
+            {(Object.keys(GAME_LABELS) as CasinoGame[]).map((key) => <option key={key} value={key}>{GAME_LABELS[key]}</option>)}
+          </select>
+        </div>
+        <div className="field"><label htmlFor="v-server">Semilla del servidor (revelada)</label><input id="v-server" className="input mono-num" value={vServer} onChange={(event) => setVServer(event.target.value.trim())} /></div>
+        <div className="field"><label htmlFor="v-client">Semilla del cliente</label><input id="v-client" className="input mono-num" value={vClient} onChange={(event) => setVClient(event.target.value.trim())} /></div>
+        <div className="field"><label htmlFor="v-nonce">Nonce</label><input id="v-nonce" className="input mono-num" inputMode="numeric" value={vNonce} onChange={(event) => setVNonce(event.target.value.replace(/\D/g, ''))} /></div>
+        {vGame === 'plinko' && <div className="field"><label htmlFor="v-rows">Filas</label>
+          <select id="v-rows" className="select" value={vRows} onChange={(event) => setVRows(Number(event.target.value))}>{[8, 12, 16].map((n) => <option key={n} value={n}>{n}</option>)}</select></div>}
+        {vGame === 'mines' && <div className="field"><label htmlFor="v-mines">Minas</label>
+          <select id="v-mines" className="select" value={vMines} onChange={(event) => setVMines(Number(event.target.value))}>{Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}</select></div>}
+        <div className="form-actions"><Button variant="primary" onClick={() => void verify()}><ShieldCheck size={16} />Calcular resultado</Button></div>
+        {check && <div className="info-grid">
+          <div className="info-row"><span>Hash de la semilla</span><strong style={{ wordBreak: 'break-all' }}>{check.hash}</strong></div>
+          {wantedHash && <div className="info-row"><span>¿Coincide con el hash mostrado antes de jugar?</span><strong className={check.hash === wantedHash ? 'text-win' : 'text-loss'}>{check.hash === wantedHash ? 'Sí' : 'No'}</strong></div>}
+          <div className="info-row"><span>Resultado</span><strong style={{ textAlign: 'right' }}>{check.text}</strong></div>
+        </div>}
+      </div>
+    </Card>
+
+    <Card>
+      <CardHeader title="Semillas reveladas" description="Semillas del servidor que ya has cambiado. Úsalas para verificar las jugadas que hiciste con ellas." />
+      {revealed.isLoading ? <Skeleton height={80} /> : !revealed.data?.length ? <p className="muted">Todavía no has cambiado ninguna semilla.</p> : <div className="table-wrap">
+        <table className="table">
+          <thead><tr><th>Semilla del servidor</th><th>Semilla del cliente</th><th>Jugadas</th><th /></tr></thead>
+          <tbody>{revealed.data.map((seed) => <tr key={seed.id}>
+            <td className="mono-num" style={{ wordBreak: 'break-all', fontSize: 12 }}>{seed.server_seed}</td>
+            <td className="mono-num">{seed.client_seed}</td>
+            <td className="mono-num">{seed.bets_count}</td>
+            <td><Button size="sm" variant="ghost" onClick={() => { setVServer(seed.server_seed); setVClient(seed.client_seed); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Usar</Button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>}
+    </Card>
+
+    <Card>
+      <CardHeader title="Cómo se calcula" />
+      <div className="stack muted" style={{ fontSize: 'var(--text-sm)' }}>
+        <p>Para cada jugada se calcula <code>HMAC_SHA256(semilla_servidor, "semilla_cliente:nonce:cursor")</code>. Cada grupo de 4 bytes se convierte en un número entre 0 y 1; el cursor sube cuando se necesitan más de 8 números.</p>
+        <p>Dados: ⌊n × 10001⌋ / 100. Limbo y crash: ⌊0,99 / (1 − n) × 100⌋ / 100. Ruleta: ⌊n × 37⌋. Rueda: ⌊n × 20⌋. Plinko: derecha si n ≥ 0,5 en cada fila. Keno y minas: barajado Fisher–Yates. Cartas: ⌊n × 52⌋ (baraja infinita).</p>
+        <p>Ningún resultado depende del navegador: el servidor lo calcula y lo guarda antes de mostrártelo.</p>
+      </div>
+    </Card>
+  </>
+}

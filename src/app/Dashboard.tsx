@@ -9,7 +9,7 @@ import { formatPoints } from '../lib/game'
 import { Avatar, Skeleton } from '../ui'
 import ToastProvider from '../ui/ToastProvider'
 import { useFaucetStatus } from '../features/faucet/useFaucetStatus'
-import { NAV_GROUPS, NAV_ITEMS, LEGACY_SECTIONS, pathFor, slugFromPath } from './nav'
+import { CASINO_GAME_ITEMS, NAV_GROUPS, NAV_ITEMS, LEGACY_SECTIONS, navSlugFor, pathFor, slugFromPath } from './nav'
 import { PrivacyContext, useSessionUser, usePrivacy } from './sessionContext'
 import './app.css'
 
@@ -30,6 +30,21 @@ const pages: Record<string, ReturnType<typeof lazy>> = {
   seguridad: lazy(() => import('../features/security/SecurityPage')),
   ajustes: lazy(() => import('../features/settings/SettingsPage')),
   ayuda: lazy(() => import('../features/help/HelpPage')),
+  casino: lazy(() => import('../features/casino/CasinoLobby')),
+  'casino/apuestas': lazy(() => import('../features/casino/CasinoHistoryPage')),
+  'casino/juego-justo': lazy(() => import('../features/casino/FairnessPage')),
+  'casino/dados': lazy(() => import('../features/casino/DicePage')),
+  'casino/limbo': lazy(() => import('../features/casino/LimboPage')),
+  'casino/crash': lazy(() => import('../features/casino/CrashPage')),
+  'casino/cara-o-cruz': lazy(() => import('../features/casino/CoinflipPage')),
+  'casino/ruleta': lazy(() => import('../features/casino/RoulettePage')),
+  'casino/tragaperras': lazy(() => import('../features/casino/SlotsPage')),
+  'casino/plinko': lazy(() => import('../features/casino/PlinkoPage')),
+  'casino/keno': lazy(() => import('../features/casino/KenoPage')),
+  'casino/rueda': lazy(() => import('../features/casino/WheelPage')),
+  'casino/minas': lazy(() => import('../features/casino/MinesPage')),
+  'casino/hi-lo': lazy(() => import('../features/casino/HiloPage')),
+  'casino/blackjack': lazy(() => import('../features/casino/BlackjackPage')),
 }
 
 export default function Dashboard() {
@@ -50,7 +65,8 @@ function Shell() {
   const slug = slugFromPath(pathname)
   const { prefs } = useAccountPrefs()
   const [menuOpen, setMenuOpen] = useState(false)
-  const activeItem = NAV_ITEMS.find((item) => item.slug === slug)
+  const activeItem = NAV_ITEMS.find((item) => item.slug === slug) ?? CASINO_GAME_ITEMS.find((item) => item.slug === slug)
+  const navSlug = navSlugFor(slug)
   const Page = pages[slug]
 
   useFaucetReminder(prefs.notifyFaucetReady)
@@ -84,7 +100,7 @@ function Shell() {
       <nav className="nav">
         {NAV_GROUPS.map((group) => <div className="nav-group" key={group.label}>
           <span className="nav-label">{group.label}</span>
-          {group.items.map((item) => <Link key={item.slug} to={pathFor(item.slug)} className="nav-link" aria-current={item.slug === slug ? 'page' : undefined} onClick={() => setMenuOpen(false)}><item.icon size={16} />{item.label}</Link>)}
+          {group.items.map((item) => <Link key={item.slug} to={pathFor(item.slug)} className="nav-link" aria-current={item.slug === navSlug ? 'page' : undefined} onClick={() => setMenuOpen(false)}><item.icon size={16} />{item.label}</Link>)}
         </div>)}
       </nav>
       <div className="sidebar-foot">

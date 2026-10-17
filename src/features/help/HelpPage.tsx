@@ -13,6 +13,8 @@ const FAQ: { q: string; a: string }[] = [
   { q: '¿Cómo funcionan los referidos?', a: 'Recibes 15 puntos por cada persona que se registre con tu enlace y complete su perfil, hasta 20 referidos. El código solo puede aplicarse durante los primeros 7 días de una cuenta nueva.' },
   { q: '¿Qué es la clasificación mensual?', a: 'Ordena a los usuarios por los puntos ganados durante el mes en curso (UTC). Puedes salir de ella o aparecer de forma anónima desde Ajustes.' },
   { q: '¿Es obligatoria la verificación en dos pasos?', a: 'No, pero la recomendamos y otorga una tarea con recompensa. Si la activas, se te pedirá un código al iniciar sesión. Guarda tus códigos de recuperación.' },
+  { q: '¿Cómo funciona el casino?', a: 'Hay doce juegos (dados, crash, minas, plinko, blackjack, ruleta, tragaperras, limbo, hi-lo, keno, rueda y cara o cruz) que se juegan con tus puntos. Los puntos siguen sin valor monetario: no se compran ni se retiran. Las jugadas no cuentan para el nivel ni para la clasificación.' },
+  { q: '¿Cómo sé que el casino no hace trampa?', a: 'Cada resultado sale de tu semilla de cliente, una semilla secreta del servidor (de la que ves el hash antes de jugar) y un contador. Al cambiar las semillas en Juego justo se revela la anterior y puedes recalcular cualquier jugada en tu navegador.' },
   { q: '¿Cómo elimino mi cuenta?', a: 'Desde Ajustes, en la sección Eliminar cuenta. Se borran de forma permanente todos tus datos y puntos.' },
 ]
 

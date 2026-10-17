@@ -33,8 +33,21 @@ const TERMS: Section[] = [
         <li>No se pueden retirar.</li>
         <li>No se pueden transferir a otras personas.</li>
         <li>No se pueden vender ni intercambiar fuera de la aplicación.</li>
+        <li>No se pueden comprar.</li>
       </ul>
       <p>Podemos ajustar, corregir o eliminar puntos cuando sea necesario para corregir errores o aplicar estas normas.</p>
+    </>,
+  },
+  {
+    title: 'Casino social',
+    body: <>
+      <p>El casino es un entretenimiento en el que solo se usan puntos promocionales. Como los puntos no se compran ni se pueden retirar o canjear, no existe premio con valor económico: no es un juego de azar con dinero.</p>
+      <ul>
+        <li>Cada resultado lo calcula el servidor con un sistema verificable (semilla del servidor, semilla del cliente y nonce) que puedes comprobar en Juego justo.</li>
+        <li>La apuesta máxima es de 100.000 puntos y el pago máximo por jugada de 1.000.000 de puntos.</li>
+        <li>Las jugadas del casino no cuentan para el nivel, los logros ni la clasificación mensual.</li>
+        <li>Juega por diversión. Si el juego deja de serlo para ti, deja de jugar.</li>
+      </ul>
     </>,
   },
   {

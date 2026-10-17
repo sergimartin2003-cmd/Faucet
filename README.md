@@ -58,6 +58,14 @@ supabase/     migraciones y función de callback para offerwalls
 
 Toda la acreditación de puntos ocurre en funciones SQL del servidor; el navegador solo las invoca.
 
+## Casino
+
+Doce juegos (dados, limbo, crash, cara o cruz, ruleta, tragaperras, plinko, keno, rueda, minas, hi-lo y blackjack) que se juegan con los puntos. Los puntos siguen sin valor monetario: no se compran, no se retiran y las jugadas no cuentan para el nivel, los logros ni la clasificación (no tocan `reward_ledger`).
+
+- Todo se resuelve en funciones SQL `security definer` (`202610170010`–`202610170013`); las partidas de varias jugadas guardan las cartas y las minas en `casino_sessions`, que el cliente no puede leer.
+- *Provably fair*: `HMAC_SHA256(semilla_servidor, "semilla_cliente:nonce:cursor")`. El jugador ve el hash de la semilla antes de jugar y la puede revelar desde Juego justo para verificar cualquier jugada en el navegador (`src/lib/casino.ts`).
+- RTP entre el 96 % (tragaperras) y el 99 %. Apuesta máxima 100.000 puntos y pago máximo por jugada 1.000.000.
+
 ## Offerwalls
 
 No hay ningún proveedor activo. `supabase/functions/offerwall-callback` es una base genérica (firma HMAC, antigüedad, idempotencia) que debe adaptarse al contrato del proveedor elegido antes de usarse.
