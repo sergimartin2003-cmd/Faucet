@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from 'react'
 import { contactEmail, siteName } from '../lib/site'
 import PublicLayout from './PublicLayout'
+import { useLang } from '../lib/i18n'
 
 type Section = { title: string; body: ReactNode }
 
-const UPDATED = '17 de octubre de 2026'
+const UPDATED = { es: '17 de octubre de 2026', en: 'October 17, 2026' }
 
 const contactSection: Section[] = contactEmail
   ? [{ title: 'Contacto', body: <p>Para cualquier consulta sobre este documento puedes escribirnos a <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p> }]
@@ -155,7 +156,7 @@ const PRIVACY: Section[] = [
   {
     title: 'Almacenamiento local y cookies',
     body: <>
-      <p>La aplicación usa el almacenamiento local de tu navegador para guardar tu sesión, tu preferencia de tema y, si llegas con un enlace de invitación, el código de referido hasta que se aplique.</p>
+      <p>La aplicación usa el almacenamiento local de tu navegador para guardar tu sesión, tus preferencias de tema e idioma y, si llegas con un enlace de invitación, el código de referido hasta que se aplique.</p>
       <p>No instalamos cookies publicitarias propias. Cuando la publicidad o las ofertas están activas, A-ADS y BitLabs se cargan dentro de marcos aislados y pueden usar su propio almacenamiento según sus políticas.</p>
     </>,
   },
@@ -186,13 +187,200 @@ const PRIVACY: Section[] = [
   ...contactSection,
 ]
 
+const contactSectionEn: Section[] = contactEmail
+  ? [{ title: 'Contact', body: <p>For any questions about this document you can write to us at <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p> }]
+  : []
+
+const TERMS_EN: Section[] = [
+  {
+    title: 'Acceptance and description of the service',
+    body: <>
+      <p>{siteName} is a rewards web app. It lets you earn points by completing surveys and offers from external partners and by inviting other people, withdraw those points in cryptocurrency, level up, check a monthly leaderboard and play in a casino with points.</p>
+      <p>By creating an account or using the service you accept these terms. If you do not agree with them, do not use the app.</p>
+    </>,
+  },
+  {
+    title: 'Minimum age and accounts',
+    body: <>
+      <p>You must be <strong>18 years of age or older</strong> to create an account and use the service.</p>
+      <p>You need an account with a valid email address, which you must verify. You agree to provide truthful information and to keep your credentials confidential.</p>
+      <p>We recommend enabling two-step verification under Security. You are responsible for the activity carried out from your account.</p>
+    </>,
+  },
+  {
+    title: 'Points and their value',
+    body: <>
+      <p>Points are earned by completing surveys and offers from our partners (currently BitLabs) and through the referral program. <strong>1,000 points are worth 1 US dollar</strong> for withdrawal purposes.</p>
+      <ul>
+        <li>Points cannot be purchased.</li>
+        <li>They cannot be transferred to other people.</li>
+        <li>They can only be redeemed through the withdrawals described in these terms.</li>
+      </ul>
+      <p>The reward for each survey or offer is set by the partner and depends, among other factors, on your country and your profile. We do not guarantee any level of earnings.</p>
+      <p>Points are credited when the partner confirms the task. If the partner later reverses a survey or offer (for example, because it was not completed correctly or because of fraud), the corresponding points are deducted from your balance.</p>
+      <p>We may adjust, correct or remove points when necessary to fix errors or enforce these rules.</p>
+    </>,
+  },
+  {
+    title: 'Withdrawals',
+    body: <>
+      <ul>
+        <li>The minimum withdrawal is 5,000 points ($5).</li>
+        <li>Withdrawals are paid in USDT (BEP20 network), Binance Pay, Litecoin, TRON or Dogecoin, for the dollar equivalent at the exchange rate at the time of payment.</li>
+        <li>You need a verified email and can only have one pending withdrawal at a time.</li>
+        <li>Each request is reviewed manually and is usually paid within 48 hours. This time frame is approximate and may be extended if the review requires it.</li>
+        <li>You are responsible for providing a correct address or Pay ID on the right network. Payments sent to wrong details cannot be recovered.</li>
+        <li>If a withdrawal is rejected, the points return to your balance unless the rejection is due to fraud.</li>
+      </ul>
+      <p>You are responsible for reporting and paying taxes on what you withdraw when the laws of your country require it.</p>
+    </>,
+  },
+  {
+    title: 'Casino',
+    body: <>
+      <p>The casino lets you bet points, which have monetary value. Only people aged 18 or older may play.</p>
+      <ul>
+        <li>Every result is calculated by the server with a verifiable system (server seed, client seed and nonce) that you can check under Fair play.</li>
+        <li>The maximum bet is 100,000 points and the maximum payout per play is 1,000,000 points.</li>
+        <li>Casino plays do not count toward your level, achievements or the monthly leaderboard.</li>
+        <li>Play responsibly and only with what you can afford to lose. If gambling stops being entertainment for you, stop playing and seek help.</li>
+      </ul>
+      <p>We may limit or close casino access for any account, especially when there are signs of fraud, abuse or problem gambling.</p>
+    </>,
+  },
+  {
+    title: 'Levels and leaderboard',
+    body: <p>Every 1,000 points earned with surveys, offers and referrals raises your level by one. The monthly leaderboard is based on the points earned during the month (excluding the casino) and resets when the next month begins.</p>,
+  },
+  {
+    title: 'Referral program',
+    body: <>
+      <p>You can invite other people with your personal link. You receive 100 points for each referral when they complete their first offer or survey, up to a maximum of 20 referrals.</p>
+      <p>The referral code is only valid during the first 7 days of the new account and cannot be applied to your own account. No points will be granted for referrals from your own, duplicate or accounts created solely to obtain rewards.</p>
+    </>,
+  },
+  {
+    title: 'Acceptable use and anti-fraud measures',
+    body: <>
+      <ul>
+        <li>Only one account per person is allowed.</li>
+        <li>Temporary or disposable email addresses are blocked.</li>
+        <li>Using VPNs, proxies, bots or any automation, providing false information in surveys or offers, and manipulating referrals or leaderboards are prohibited.</li>
+      </ul>
+      <p>If we detect several accounts belonging to the same person or any other fraud, we may reject withdrawals, void the points obtained and close the accounts involved.</p>
+    </>,
+  },
+  {
+    title: 'Account deletion',
+    body: <p>You can delete your account at any time from Settings. Deletion permanently erases your profile, your balance and your history, and cannot be undone. Withdraw your points before deleting it: points in a deleted account are lost.</p>,
+  },
+  {
+    title: 'Availability and liability',
+    body: <>
+      <p>The service is provided as is, with no guarantee of continuous availability. We may modify, suspend or discontinue features at any time, including the availability of surveys and offers, which depends on our partners.</p>
+      <p>To the extent permitted by law, we are not liable for damages arising from the use of, or inability to use, the service, nor for changes in cryptocurrency prices after payment.</p>
+    </>,
+  },
+  {
+    title: 'Changes to these terms',
+    body: <p>We may update these terms to reflect changes in the service or in the law. We will show the date of the last update at the top of this document. Continuing to use the service after a change means you accept it.</p>,
+  },
+  ...contactSectionEn,
+]
+
+const PRIVACY_EN: Section[] = [
+  {
+    title: 'Scope of this policy',
+    body: <p>This policy explains what personal data {siteName} processes, what it uses it for and what rights you have. It applies to the web app and to the accounts created in it.</p>,
+  },
+  {
+    title: 'Data we process',
+    body: <>
+      <ul>
+        <li><strong>Account data:</strong> your email address and your password (stored encrypted by the authentication system).</li>
+        <li><strong>Optional profile data:</strong> display name, country, bio and avatar color.</li>
+        <li><strong>Activity:</strong> points log (offers, surveys, referrals and reversals), level, achievements, reward history and casino plays.</li>
+        <li><strong>Withdrawals:</strong> chosen currency, destination address or Binance Pay ID, amounts, status and reference of each payment.</li>
+        <li><strong>Security:</strong> authentication events, such as sign-ins and two-step verification, managed by Supabase Auth.</li>
+      </ul>
+      <p>We do not ask for bank details or cards. We may ask you to verify your identity or age if required by law or to prevent fraud.</p>
+    </>,
+  },
+  {
+    title: 'What we use your data for',
+    body: <>
+      <ul>
+        <li>Creating and maintaining your account and providing the service (performance of the service).</li>
+        <li>Calculating points, levels and leaderboards, and processing and paying your withdrawals.</li>
+        <li>Protecting your account and preventing fraud, such as duplicate accounts, disposable emails or reversed tasks (legitimate interest in the security of the service).</li>
+        <li>Complying with legal obligations, such as keeping payment records.</li>
+        <li>Sending you the emails needed to verify your address or recover your password.</li>
+      </ul>
+      <p>We do not sell your data or use it for advertising.</p>
+    </>,
+  },
+  {
+    title: 'Providers involved',
+    body: <>
+      <p>To provide the service we rely on the following data processors:</p>
+      <ul>
+        <li><strong>Supabase:</strong> hosting of the database and the authentication system.</li>
+        <li><strong>Vercel:</strong> hosting of the web app.</li>
+        <li><strong>Cloudflare Turnstile:</strong> anti-bot verification, only when enabled. It may process technical browser data needed to tell people and bots apart.</li>
+        <li><strong>BitLabs:</strong> paid offers and surveys rewarded with points, only when enabled. It receives your internal user identifier so it can credit your tasks; surveys may ask you for data that you choose to provide directly to BitLabs under its own privacy policy.</li>
+        <li><strong>Binance and the blockchain networks:</strong> they receive the Pay ID or destination address and the amount to make the payment. Transactions on a blockchain are public and permanent.</li>
+        <li><strong>A-ADS:</strong> advertising network, only when enabled. It shows ads inside an isolated frame and may process technical data from your browser (IP, user agent) to serve and count them.</li>
+      </ul>
+    </>,
+  },
+  {
+    title: 'Local storage and cookies',
+    body: <>
+      <p>The app uses your browser's local storage to keep your session, your theme and language preferences and, if you arrive with an invitation link, the referral code until it is applied.</p>
+      <p>We do not set our own advertising cookies. When ads or offers are active, A-ADS and BitLabs load inside isolated frames and may use their own storage according to their policies.</p>
+    </>,
+  },
+  {
+    title: 'Retention',
+    body: <p>We keep your data while your account is active. If you delete your account from Settings, your profile, your balance and your history are permanently erased. Transactions already sent to a blockchain cannot be erased.</p>,
+  },
+  {
+    title: 'Your rights',
+    body: <>
+      <p>You can exercise your rights of access, rectification, erasure, objection, restriction and portability of your data.</p>
+      <ul>
+        <li>You can view and edit your profile data in your dashboard.</li>
+        <li>You can export your reward history as CSV.</li>
+        <li>You can delete your account yourself from Settings, without intermediaries.</li>
+      </ul>
+      <p>If you believe your rights have not been respected, you can file a complaint with the data protection authority of your country.</p>
+    </>,
+  },
+  {
+    title: 'Security',
+    body: <p>We apply reasonable technical and organizational measures, such as database-level access control, optional two-step verification and single-use recovery codes. No system is completely infallible, so we recommend using a unique password and enabling two-step verification.</p>,
+  },
+  {
+    title: 'Changes to this policy',
+    body: <p>We may update this policy when the service or the law changes. The date of the last update appears at the top of the document.</p>,
+  },
+  ...contactSectionEn,
+]
+
 const CONTENT = {
-  terms: { title: 'Términos de uso', docTitle: 'Términos de uso · Faucet', intro: 'Estas condiciones regulan el uso de la aplicación.', sections: TERMS },
-  privacy: { title: 'Política de privacidad', docTitle: 'Política de privacidad · Faucet', intro: 'Qué datos tratamos, por qué y cómo puedes controlarlos.', sections: PRIVACY },
+  es: {
+    terms: { title: 'Términos de uso', docTitle: 'Términos de uso · Faucet', intro: 'Estas condiciones regulan el uso de la aplicación.', sections: TERMS },
+    privacy: { title: 'Política de privacidad', docTitle: 'Política de privacidad · Faucet', intro: 'Qué datos tratamos, por qué y cómo puedes controlarlos.', sections: PRIVACY },
+  },
+  en: {
+    terms: { title: 'Terms of use', docTitle: 'Terms of use · Faucet', intro: 'These terms govern the use of the app.', sections: TERMS_EN },
+    privacy: { title: 'Privacy policy', docTitle: 'Privacy policy · Faucet', intro: 'What data we process, why, and how you can control it.', sections: PRIVACY_EN },
+  },
 }
 
 export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
-  const page = CONTENT[kind]
+  const lang = useLang()
+  const page = CONTENT[lang][kind]
 
   useEffect(() => { document.title = page.docTitle }, [page.docTitle])
 
@@ -202,7 +390,7 @@ export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
         <header className="legal-head">
           <h1>{page.title}</h1>
           <p className="legal-intro">{page.intro}</p>
-          <p className="legal-updated">Última actualización: {UPDATED}</p>
+          <p className="legal-updated">{lang === 'en' ? 'Last updated' : 'Última actualización'}: {UPDATED[lang]}</p>
         </header>
         {page.sections.map((section, index) => <section key={section.title} className="legal-section" aria-labelledby={`legal-${kind}-${index}`}>
           <h2 id={`legal-${kind}-${index}`}>{index + 1}. {section.title}</h2>
