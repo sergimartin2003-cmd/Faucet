@@ -4,7 +4,8 @@
 //   https://<project-ref>.supabase.co/functions/v1/bitlabs-callback?uid=[%USER:UID%]&tx=[%TX%]&val=[%VALUE:CURRENCY%]&type=[%TYPE%]
 // and set the BITLABS_APP_SECRET function secret. BitLabs appends &hash=<hex HMAC-SHA1 of
 // the full URL, keyed with the app secret>; the URL must be hashed exactly as received.
-// Rewards are credited once per transaction id through public.credit_offerwall_completion.
+// Rewards are credited once per transaction id through public.credit_offerwall_completion;
+// negative values (reconciliations) go through public.reverse_offerwall_completion.
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const PROVIDER = 'bitlabs'
@@ -55,13 +56,14 @@ Deno.serve(async (request: Request) => {
   const value = Number(params.get('val'))
   if (!UUID_PATTERN.test(uid) || tx.length < 1 || tx.length > 128 || !Number.isFinite(value)) return reply('Invalid parameters', 400, raw)
 
-  // Reconciliations (negative values) and zero-value events are acknowledged but not credited.
-  const points = Math.min(100_000, Math.round(value))
-  if (points < 1) return reply('OK', 200, raw, 'not credited')
+  // Negative values are reconciliations: the points are taken back (never below zero).
+  const points = Math.min(100_000, Math.round(Math.abs(value)))
+  if (points < 1) return reply('OK', 200, raw, 'zero value')
+  const reversal = value < 0
 
   let response: Response
   try {
-    response = await fetch(`${supabaseUrl}/rest/v1/rpc/credit_offerwall_completion`, {
+    response = await fetch(`${supabaseUrl}/rest/v1/rpc/${reversal ? 'reverse_offerwall_completion' : 'credit_offerwall_completion'}`, {
       method: 'POST',
       headers: { apikey: serviceRoleKey, authorization: `Bearer ${serviceRoleKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({ p_provider: PROVIDER, p_external_transaction_id: tx, p_user_id: uid, p_points: points }),
@@ -70,7 +72,7 @@ Deno.serve(async (request: Request) => {
     return reply('Reward processing unavailable', 502, raw)
   }
 
-  if (response.ok) return reply('OK', 200, raw, `credited ${points}`)
+  if (response.ok) return reply('OK', 200, raw, `${reversal ? 'reversed' : 'credited'} ${points}`)
   const detail = await response.text()
   // Unknown user (deleted account) or a replayed transaction: acknowledge so BitLabs stops retrying.
   if (detail.includes('23503') || detail.includes('23505')) return reply('OK', 200, raw, detail)

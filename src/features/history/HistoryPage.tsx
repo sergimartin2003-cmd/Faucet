@@ -8,8 +8,7 @@ import { supabase } from '../../lib/supabase'
 
 const FILTERS = [
   { value: '', label: 'Todo' },
-  { value: 'daily_faucet', label: 'Faucet' },
-  { value: 'earn_task', label: 'Tareas' },
+  { value: 'offerwall', label: 'Ofertas' },
   { value: 'referral', label: 'Referidos' },
 ]
 
@@ -39,7 +38,7 @@ export default function HistoryPage() {
     setExporting(true)
     try {
       const all = await fetchAll(source)
-      const csv = toCsv([['Fecha (UTC)', 'Concepto', 'Puntos', 'Saldo posterior'], ...all.map((row) => [row.created_at, describeLedgerEntry(row.source_type, row.detail), row.points, row.balance_after])])
+      const csv = toCsv([['Fecha (UTC)', 'Concepto', 'Puntos', 'Saldo posterior'], ...all.map((row) => [row.created_at, describeLedgerEntry(row.source_type), row.points, row.balance_after])])
       const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }))
       const link = Object.assign(document.createElement('a'), { href: url, download: `faucet-historial-${new Date().toISOString().slice(0, 10)}.csv` })
       link.click()
@@ -65,7 +64,7 @@ export default function HistoryPage() {
             <thead><tr><th>Fecha</th><th>Concepto</th><th className="num">Puntos</th><th className="num">Saldo</th></tr></thead>
             <tbody>{rows.map((row) => <tr key={row.id}>
               <td style={{ whiteSpace: 'nowrap' }}>{dateTime.format(new Date(row.created_at))}</td>
-              <td>{describeLedgerEntry(row.source_type, row.detail)}</td>
+              <td>{describeLedgerEntry(row.source_type)}</td>
               <td className="num positive">+{formatPoints(row.points)}</td>
               <td className="num muted">{formatPoints(row.balance_after)}</td>
             </tr>)}</tbody>

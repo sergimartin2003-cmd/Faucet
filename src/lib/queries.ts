@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import { CLAIM_EVENT } from './accountPrefs'
 import type { LedgerRow } from './game'
+import type { WithdrawalMethod, WithdrawalStatus } from './payouts'
 
 const enabled = Boolean(supabase)
 
@@ -10,27 +10,14 @@ function client() {
   return supabase
 }
 
-export type FaucetState = { points: number; streak: number; bestStreak: number; lastClaimAt: string | null }
+// The points balance. The query key stays 'faucet' because the casino writes
+// its results into the same cache entry.
+export type FaucetState = { points: number }
 
 async function fetchFaucetState(): Promise<FaucetState> {
-  const db = client()
-  const [accountResult, claimResult] = await Promise.all([
-    db.from('daily_faucet_accounts').select('points, streak, best_streak').maybeSingle(),
-    db.from('daily_faucet_claims').select('claimed_at').order('claimed_at', { ascending: false }).limit(1).maybeSingle(),
-  ])
-  let account = accountResult.data as { points: number; streak?: number; best_streak?: number } | null
-  if (accountResult.error) {
-    const legacy = await db.from('daily_faucet_accounts').select('points').maybeSingle()
-    if (legacy.error) throw legacy.error
-    account = legacy.data
-  }
-  if (claimResult.error) throw claimResult.error
-  return {
-    points: account?.points ?? 0,
-    streak: account?.streak ?? 0,
-    bestStreak: account?.best_streak ?? 0,
-    lastClaimAt: claimResult.data?.claimed_at ?? null,
-  }
+  const { data, error } = await client().from('daily_faucet_accounts').select('points').maybeSingle()
+  if (error) throw error
+  return { points: data?.points ?? 0 }
 }
 
 export const useFaucetState = () => useQuery({ queryKey: ['faucet'], queryFn: fetchFaucetState, enabled })
@@ -42,16 +29,6 @@ export const useLedger = () => useQuery({
     const { data, error } = await client().from('reward_ledger').select('created_at, source_type, points').order('created_at', { ascending: false }).limit(1000)
     if (error) throw error
     return data ?? []
-  },
-})
-
-export const useCompletedTasks = () => useQuery({
-  queryKey: ['tasks'],
-  enabled,
-  queryFn: async () => {
-    const { data, error } = await client().from('earn_task_completions').select('task_key, reward, completed_at')
-    if (error) throw error
-    return (data ?? []) as { task_key: string; reward: number; completed_at: string }[]
   },
 })
 
@@ -108,44 +85,6 @@ export const useHistory = (source: string) => useInfiniteQuery({
   getNextPageParam: (lastPage, pages) => (lastPage.length < HISTORY_PAGE_SIZE ? undefined : pages.length * HISTORY_PAGE_SIZE),
 })
 
-function useInvalidateRewards() {
-  const queryClient = useQueryClient()
-  return () => Promise.all(['faucet', 'ledger', 'tasks', 'referral', 'leaderboard', 'history', 'surveys', 'videos', 'trivia', 'scratch'].map((key) => queryClient.invalidateQueries({ queryKey: [key] })))
-}
-
-export type ClaimResult = { claimed: boolean; reward: number; balance: number; last_claim_at: string; streak: number }
-
-export function useClaimFaucet() {
-  const invalidate = useInvalidateRewards()
-  return useMutation({
-    mutationFn: async (): Promise<ClaimResult> => {
-      const { data, error } = await client().rpc('claim_daily_faucet')
-      if (error) throw error
-      const result = data?.[0]
-      if (!result) throw new Error('El servidor no devolvió el estado de la recompensa.')
-      return result
-    },
-    onSuccess: (result) => {
-      void invalidate()
-      if (result.claimed) window.dispatchEvent(new Event(CLAIM_EVENT))
-    },
-  })
-}
-
-export function useCompleteTask() {
-  const invalidate = useInvalidateRewards()
-  return useMutation({
-    mutationFn: async (taskKey: string) => {
-      const { data, error } = await client().rpc('complete_earn_task', { task_key: taskKey })
-      if (error) throw error
-      const result = data?.[0]
-      if (!result) throw new Error('El servidor no devolvió el estado de la tarea.')
-      return result as { awarded: boolean; reward: number; balance: number; completed_at: string }
-    },
-    onSuccess: () => { void invalidate() },
-  })
-}
-
 export const useMfaFactors = () => useQuery({
   queryKey: ['mfa-factors'],
   enabled,
@@ -160,151 +99,99 @@ export function errorCode(error: unknown) {
   return typeof error === 'object' && error !== null && 'code' in error ? String((error as { code: unknown }).code) : ''
 }
 
-export type SurveySummary = { slug: string; title: string; description: string; reward: number; est_minutes: number; question_count: number; completed: boolean }
-export type SurveyQuestion = { id: number; prompt: string; kind: 'single' | 'scale'; options: string[] }
-export type SurveyDetail = { slug: string; title: string; description: string; reward: number; completed: boolean; questions: SurveyQuestion[] }
-export type AwardResult = { awarded: boolean; reward: number; balance: number }
-
-export const useSurveys = () => useQuery({
-  queryKey: ['surveys'],
-  enabled,
-  retry: false,
-  queryFn: async (): Promise<SurveySummary[]> => {
-    const { data, error } = await client().rpc('list_surveys')
-    if (error) throw error
-    return (data ?? []) as SurveySummary[]
-  },
-})
-
-export function useStartSurvey() {
-  return useMutation({
-    mutationFn: async (slug: string): Promise<SurveyDetail> => {
-      const { data, error } = await client().rpc('get_survey', { p_slug: slug })
-      if (error) throw error
-      return data as SurveyDetail
-    },
-  })
-}
-
-export function useSubmitSurvey() {
-  const invalidate = useInvalidateRewards()
-  return useMutation({
-    mutationFn: async ({ slug, answers }: { slug: string; answers: number[] }): Promise<AwardResult> => {
-      const { data, error } = await client().rpc('submit_survey', { p_slug: slug, p_answers: answers })
-      if (error) throw error
-      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
-      return data[0] as AwardResult
-    },
-    onSuccess: () => { void invalidate() },
-  })
-}
-
-export type EarnVideo = { id: string; title: string; channel: string; duration_seconds: number; reward: number; lang: string; watched: boolean; watched_today: number; daily_limit: number }
-
-export const useVideos = () => useQuery({
-  queryKey: ['videos'],
-  enabled,
-  retry: false,
-  queryFn: async (): Promise<EarnVideo[]> => {
-    const { data, error } = await client().rpc('list_videos')
-    if (error) throw error
-    return (data ?? []) as EarnVideo[]
-  },
-})
-
-export function useStartVideo() {
-  return useMutation({
-    mutationFn: async (videoId: string): Promise<string> => {
-      const { data, error } = await client().rpc('start_video', { p_video_id: videoId })
-      if (error) throw error
-      return data as string
-    },
-  })
-}
-
-export function useCompleteVideo() {
-  const invalidate = useInvalidateRewards()
-  return useMutation({
-    mutationFn: async (videoId: string): Promise<AwardResult> => {
-      const { data, error } = await client().rpc('complete_video', { p_video_id: videoId })
-      if (error) throw error
-      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
-      return data[0] as AwardResult
-    },
-    onSuccess: () => { void invalidate() },
-  })
-}
-
-export type TriviaQuestion = {
+export type Withdrawal = {
   id: number
-  prompt: string
-  options: string[]
-  answered: boolean
-  your_answer: number | null
-  correct: boolean | null
-  explanation: string | null
-  correct_index: number | null
+  points: number
+  usd_cents: number
+  method: WithdrawalMethod
+  address: string
+  status: WithdrawalStatus
+  tx_ref: string | null
+  note: string | null
+  created_at: string
+  processed_at: string | null
 }
 
-export const useDailyTrivia = () => useQuery({
-  queryKey: ['trivia'],
+export const useWithdrawals = () => useQuery({
+  queryKey: ['withdrawals'],
   enabled,
-  retry: false,
-  queryFn: async (): Promise<TriviaQuestion[]> => {
-    const { data, error } = await client().rpc('get_daily_trivia')
+  queryFn: async (): Promise<Withdrawal[]> => {
+    const { data, error } = await client().from('withdrawals')
+      .select('id, points, usd_cents, method, address, status, tx_ref, note, created_at, processed_at')
+      .order('created_at', { ascending: false }).limit(50)
     if (error) throw error
-    return (data ?? []) as TriviaQuestion[]
+    return (data ?? []) as Withdrawal[]
   },
 })
 
-export type TriviaResult = { correct: boolean; correct_index: number; explanation: string | null; reward: number; balance: number }
-
-export function useAnswerTrivia() {
-  const invalidate = useInvalidateRewards()
+export function useRequestWithdrawal() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ questionId, answer }: { questionId: number; answer: number }): Promise<TriviaResult> => {
-      const { data, error } = await client().rpc('answer_trivia', { p_question_id: questionId, p_answer_index: answer })
+    mutationFn: async (input: { points: number; method: WithdrawalMethod; address: string }) => {
+      const { data, error } = await client().rpc('request_withdrawal', { p_points: input.points, p_method: input.method, p_address: input.address.trim() })
       if (error) throw error
-      if (!data?.[0]) throw new Error('El servidor no devolvió el resultado.')
-      return data[0] as TriviaResult
+      return data as Withdrawal & { balance: number }
     },
-    onSuccess: () => { void invalidate() },
+    onSuccess: (result) => {
+      queryClient.setQueryData<FaucetState>(['faucet'], (old) => (old ? { ...old, points: result.balance } : old))
+      void queryClient.invalidateQueries({ queryKey: ['withdrawals'] })
+    },
   })
 }
 
-export type ScratchStatus = { available: boolean; last_reward: number | null; next_available_at: string | null }
-
-export const useScratchStatus = () => useQuery({
-  queryKey: ['scratch'],
+export const useIsAdmin = () => useQuery({
+  queryKey: ['is-admin'],
   enabled,
+  staleTime: Infinity,
   retry: false,
-  queryFn: async (): Promise<ScratchStatus> => {
-    const { data, error } = await client().rpc('get_scratch_status')
-    if (error || !data?.[0]) throw error ?? new Error('Sin datos')
-    return data[0] as ScratchStatus
+  queryFn: async (): Promise<boolean> => {
+    const { data, error } = await client().rpc('is_admin')
+    if (error) return false
+    return data === true
   },
 })
 
-export function usePlayScratch() {
-  const invalidate = useInvalidateRewards()
+export type AdminWithdrawal = Withdrawal & {
+  user_id: string
+  email: string
+  account_created_at: string
+  offer_points: number
+  reversed_points: number
+  casino_net: number
+  paid_points: number
+  balance: number
+}
+
+export const useAdminWithdrawals = (status: WithdrawalStatus | 'all') => useQuery({
+  queryKey: ['admin-withdrawals', status],
+  enabled,
+  queryFn: async (): Promise<AdminWithdrawal[]> => {
+    const { data, error } = await client().rpc('admin_list_withdrawals', { p_status: status === 'all' ? null : status, p_limit: 200 })
+    if (error) throw error
+    return (data ?? []) as AdminWithdrawal[]
+  },
+})
+
+export function useProcessWithdrawal() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (): Promise<{ reward: number; balance: number }> => {
-      const { data, error } = await client().rpc('play_scratch')
-      if (error || !data?.[0]) throw error ?? new Error('El servidor no devolvió el resultado.')
-      return data[0] as { reward: number; balance: number }
+    mutationFn: async (input: { id: number; action: 'paid' | 'rejected'; txRef?: string; note?: string }) => {
+      const { error } = await client().rpc('admin_process_withdrawal', { p_id: input.id, p_action: input.action, p_tx_ref: input.txRef ?? null, p_note: input.note ?? null })
+      if (error) throw error
     },
-    onSuccess: () => { void invalidate() },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['admin-withdrawals'] }) },
   })
 }
 
-export function earnErrorMessage(error: unknown) {
+export function withdrawalErrorMessage(error: unknown) {
   const text = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as { message: unknown }).message) : ''
-  if (text.includes('Email confirmation')) return 'Confirma tu correo electrónico para ganar puntos con esta actividad.'
-  if (text.includes('Too fast')) return 'Has respondido demasiado rápido. Lee las preguntas con calma e inténtalo de nuevo.'
-  if (text.includes('Video not finished')) return 'Aún no ha pasado el tiempo necesario. Termina de ver el vídeo para reclamar.'
-  if (text.includes('Daily video limit')) return 'Has alcanzado el límite diario de vídeos. Vuelve mañana.'
-  if (text.includes('Already answered')) return 'Ya has respondido esta pregunta hoy.'
-  if (text.includes('Already played')) return 'Ya has rascado tu cartón de hoy. Vuelve mañana.'
-  if (errorCode(error) === 'PGRST202' || text.includes('Could not find the function')) return 'Esta actividad aún no está activada en la base de datos. Falta aplicar la última migración de Supabase.'
+  if (text.includes('Email confirmation')) return 'Confirma tu correo electrónico antes de retirar.'
+  if (text.includes('Invalid withdrawal amount')) return 'La cantidad no es válida. El mínimo es 5.000 puntos.'
+  if (text.includes('Invalid withdrawal address')) return 'La dirección no es válida para la moneda elegida.'
+  if (text.includes('already pending')) return 'Ya tienes un retiro pendiente. Espera a que se procese.'
+  if (text.includes('Insufficient balance')) return 'No tienes puntos suficientes.'
+  if (text.includes('Transaction reference')) return 'Indica el hash de la transacción o la referencia del pago.'
+  if (text.includes('already processed')) return 'Este retiro ya se había procesado.'
+  if (text.includes('Admin only')) return 'Solo un administrador puede hacer esto.'
   return 'No se pudo completar la acción. Inténtalo de nuevo en unos minutos.'
 }

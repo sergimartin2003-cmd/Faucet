@@ -1,11 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Gift, LogOut, Eye, EyeOff, Menu, Settings, User as UserIcon, X } from 'lucide-react'
+import { ArrowUpFromLine, LogOut, Eye, EyeOff, Menu, Settings, User as UserIcon, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { navigate, usePathname } from '../lib/router'
 import Link from '../lib/Link'
 import { useAccountPrefs } from '../lib/accountPrefs'
-import { useFaucetReminder } from '../lib/faucetReminder'
 import { formatPoints } from '../lib/game'
+import { useIsAdmin } from '../lib/queries'
 import { Avatar, Skeleton } from '../ui'
 import ToastProvider from '../ui/ToastProvider'
 import AdSlot from '../components/AdSlot'
@@ -16,12 +16,8 @@ import './app.css'
 
 const pages: Record<string, ReturnType<typeof lazy>> = {
   '': lazy(() => import('../features/overview/OverviewPage')),
-  faucet: lazy(() => import('../features/faucet/FaucetPage')),
-  encuestas: lazy(() => import('../features/surveys/SurveysPage')),
-  videos: lazy(() => import('../features/videos/VideosPage')),
-  trivia: lazy(() => import('../features/trivia/TriviaPage')),
-  rasca: lazy(() => import('../features/scratch/ScratchPage')),
-  tareas: lazy(() => import('../features/tasks/TasksPage')),
+  retirar: lazy(() => import('../features/withdraw/WithdrawPage')),
+  admin: lazy(() => import('../features/admin/AdminPage')),
   temporada: lazy(() => import('../features/season/SeasonPage')),
   logros: lazy(() => import('../features/achievements/AchievementsPage')),
   referidos: lazy(() => import('../features/referrals/ReferralsPage')),
@@ -65,13 +61,11 @@ export default function Dashboard() {
 function Shell() {
   const pathname = usePathname()
   const slug = slugFromPath(pathname)
-  const { prefs } = useAccountPrefs()
+  const isAdmin = useIsAdmin().data === true
   const [menuOpen, setMenuOpen] = useState(false)
   const activeItem = NAV_ITEMS.find((item) => item.slug === slug) ?? CASINO_GAME_ITEMS.find((item) => item.slug === slug)
   const navSlug = navSlugFor(slug)
   const Page = pages[slug]
-
-  useFaucetReminder(prefs.notifyFaucetReady)
 
   useEffect(() => {
     const section = new URLSearchParams(window.location.search).get('section')
@@ -100,7 +94,7 @@ function Shell() {
         <button className="icon-button menu-button" aria-label="Cerrar menú" onClick={() => setMenuOpen(false)}><X size={18} /></button>
       </div>
       <nav className="nav">
-        {NAV_GROUPS.map((group) => <div className="nav-group" key={group.label}>
+        {NAV_GROUPS.filter((group) => !group.adminOnly || isAdmin).map((group) => <div className="nav-group" key={group.label}>
           <span className="nav-label">{group.label}</span>
           {group.items.map((item) => <Link key={item.slug} to={pathFor(item.slug)} className="nav-link" aria-current={item.slug === navSlug ? 'page' : undefined} onClick={() => setMenuOpen(false)}><item.icon size={16} />{item.label}</Link>)}
         </div>)}
@@ -159,7 +153,6 @@ function Topbar({ title, onMenu, onSignOut }: { title: string; onMenu: () => voi
   return <header className="topbar">
     <button className="icon-button menu-button" aria-label="Abrir menú" onClick={onMenu}><Menu size={18} /></button>
     <div className="topbar-title">{title}</div>
-    {faucet.available && <Link to="/dashboard/faucet" className="badge badge-success"><span className="ready-dot" />Faucet listo</Link>}
     <div className="balance-chip" title="Saldo de puntos">
       <span>Puntos</span>
       {faucet.isLoading ? <Skeleton width={36} height={14} /> : hidden ? '•••' : faucet.points === null ? '—' : formatPoints(faucet.points)}
@@ -171,7 +164,7 @@ function Topbar({ title, onMenu, onSignOut }: { title: string; onMenu: () => voi
         <div className="menu-head"><strong>{name}</strong><span>{user?.email ?? 'Modo desarrollo'}</span></div>
         <Link to="/dashboard/perfil" className="menu-item" role="menuitem" onClick={() => setOpen(false)}><UserIcon size={16} />Perfil</Link>
         <Link to="/dashboard/ajustes" className="menu-item" role="menuitem" onClick={() => setOpen(false)}><Settings size={16} />Ajustes</Link>
-        <Link to="/dashboard/faucet" className="menu-item" role="menuitem" onClick={() => setOpen(false)}><Gift size={16} />Faucet diario</Link>
+        <Link to="/dashboard/retirar" className="menu-item" role="menuitem" onClick={() => setOpen(false)}><ArrowUpFromLine size={16} />Retirar</Link>
         <button className="menu-item" role="menuitem" onClick={onSignOut}><LogOut size={16} />Cerrar sesión</button>
       </div>}
     </div>

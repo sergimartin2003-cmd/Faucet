@@ -20,7 +20,7 @@ export default function OffersPage() {
         />
       </Card>}
     <p className="muted" style={{ fontSize: 'var(--text-xs)' }}>
-      Las ofertas las gestiona BitLabs. La acreditación puede tardar unos minutos y el proveedor puede rechazar tareas incompletas o fraudulentas. Los puntos no tienen valor monetario.
+      Las ofertas las gestiona BitLabs. La acreditación puede tardar unos minutos y el proveedor puede rechazar tareas incompletas o fraudulentas; si anula una tarea ya pagada, sus puntos se descuentan de tu saldo. 1.000 puntos = 1 $, retirables desde 5.000.
     </p>
   </>
 }

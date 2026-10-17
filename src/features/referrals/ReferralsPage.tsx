@@ -25,7 +25,7 @@ export default function ReferralsPage() {
   }
 
   return <>
-    <PageHeader title="Referidos" description={summary ? `Recibes ${summary.reward_per_referral} puntos por cada amigo que se registre con tu enlace y complete su perfil (hasta ${summary.max_rewarded} referidos).` : 'Invita a tus amigos y recibe puntos cuando completen su perfil.'} />
+    <PageHeader title="Referidos" description={summary ? `Recibes ${summary.reward_per_referral} puntos por cada amigo que se registre con tu enlace y complete su primera oferta o encuesta (hasta ${summary.max_rewarded} referidos).` : 'Invita a tus amigos y recibe puntos cuando completen su primera oferta.'} />
     {referral.isError && <Alert tone="error">No se pudo cargar tu enlace de invitación. Inténtalo de nuevo en unos minutos.</Alert>}
     <Card>
       <CardHeader title="Tu enlace de invitación" description="Compártelo con quien quieras. Cada código es personal." />
@@ -36,14 +36,14 @@ export default function ReferralsPage() {
     </Card>
     <div className="grid-stats grid-stats-3">
       <Card><Stat label="Registrados" value={summary?.total_referrals ?? '—'} hint="Personas que usaron tu enlace" /></Card>
-      <Card><Stat label="Verificados" value={summary ? `${summary.rewarded_referrals} / ${summary.max_rewarded}` : '—'} hint="Completaron su perfil" /></Card>
+      <Card><Stat label="Activos" value={summary ? `${summary.rewarded_referrals} / ${summary.max_rewarded}` : '—'} hint="Completaron su primera oferta" /></Card>
       <Card><Stat label="Puntos ganados" value={summary ? formatPoints(summary.points_earned) : '—'} unit="puntos" /></Card>
     </div>
     <Card>
       <CardHeader title="Cómo funciona" />
       <ol className="steps">
         <li><div><strong>Comparte tu enlace</strong><span>Tu amigo se registra desde el enlace y verifica su correo.</span></div></li>
-        <li><div><strong>Completa su perfil</strong><span>Cuando tu amigo complete la tarea de perfil, el referido queda verificado.</span></div></li>
+        <li><div><strong>Completa su primera oferta</strong><span>Cuando tu amigo complete su primera encuesta u oferta, el referido pasa a estar activo.</span></div></li>
         <li><div><strong>Recibes los puntos</strong><span>La recompensa se acredita automáticamente en tu saldo.</span></div></li>
       </ol>
     </Card>

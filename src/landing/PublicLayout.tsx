@@ -117,7 +117,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <div className="landing-container landing-footer-inner">
           <div className="landing-footer-brand">
             <span className="landing-brand"><LogoMark /><span>{siteName}</span></span>
-            <p>Los puntos son promocionales, no tienen valor monetario y no pueden retirarse.</p>
+            <p>Gana puntos con encuestas y ofertas y retíralos en crypto: 1.000 puntos = 1 $. Solo mayores de 18 años.</p>
           </div>
           <nav className="landing-footer-links" aria-label="Legal">
             <Link to="/terminos">Términos de uso</Link>

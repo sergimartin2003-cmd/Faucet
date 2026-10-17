@@ -164,7 +164,7 @@ function TwoFactorCard() {
       </div>}
 
       {!pending && verified.length === 0 && <div className="row-between">
-        <p className="muted" style={{ maxWidth: 520 }}>Se te pedirá un código de tu app cada vez que inicies sesión. Además, obtienes una tarea con recompensa.</p>
+        <p className="muted" style={{ maxWidth: 520 }}>Se te pedirá un código de tu app cada vez que inicies sesión. Es la mejor forma de proteger tu saldo.</p>
         <Button variant="primary" loading={busy} onClick={() => void enroll()}>Configurar</Button>
       </div>}
 
@@ -181,7 +181,7 @@ function TwoFactorCard() {
 
     {removing && <Dialog title={removing.verified ? 'Desactivar verificación en dos pasos' : 'Cancelar configuración'} onClose={() => setRemoving(null)}
       actions={<><Button variant="ghost" onClick={() => setRemoving(null)} disabled={busy}>Volver</Button><Button variant="danger" loading={busy} onClick={() => void remove(removing)}>{removing.verified ? 'Desactivar' : 'Cancelar configuración'}</Button></>}>
-      <p className="muted">{removing.verified ? 'Tu cuenta dejará de pedir un código al iniciar sesión y perderás la tarea asociada si aún no la habías completado.' : 'Se descartará la configuración pendiente.'}</p>
+      <p className="muted">{removing.verified ? 'Tu cuenta dejará de pedir un código al iniciar sesión.' : 'Se descartará la configuración pendiente.'}</p>
     </Dialog>}
 
     {regenerating && <Dialog title={remaining ? 'Regenerar códigos de recuperación' : 'Generar códigos de recuperación'} onClose={() => setRegenerating(false)}

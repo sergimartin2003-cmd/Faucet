@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, CardHeader, Dialog, PageHeader, Switch } from '../../ui'
 import { useToast } from '../../ui/toastContext'
 import { saveSettings, useAccountPrefs } from '../../lib/accountPrefs'
-import { browserNotificationsSupported } from '../../lib/faucetReminder'
 import { navigate } from '../../lib/router'
 import { supabase } from '../../lib/supabase'
 import { useSessionUser } from '../../app/sessionContext'
@@ -40,15 +39,6 @@ export default function SettingsPage() {
     }
   }
 
-  const toggleNotify = async (value: boolean) => {
-    if (value) {
-      if (!browserNotificationsSupported()) return toast('Este navegador no admite notificaciones.', 'error')
-      const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission()
-      if (permission !== 'granted') return toast('Las notificaciones están bloqueadas en el navegador. Actívalas desde los permisos del sitio.', 'error')
-    }
-    await update({ notifyFaucetReady: value })
-  }
-
   const signOutOthers = async () => {
     if (!supabase) return
     setBusy(true)
@@ -75,7 +65,7 @@ export default function SettingsPage() {
   const disabled = busy || loading || !schemaReady
 
   return <>
-    <PageHeader title="Ajustes" description="Apariencia, avisos, privacidad y gestión de la cuenta." />
+    <PageHeader title="Ajustes" description="Apariencia, privacidad y gestión de la cuenta." />
     {!loading && !schemaReady && <Alert tone="warning">Las preferencias de cuenta aún no están disponibles en este entorno.</Alert>}
 
     <Card>
@@ -89,11 +79,7 @@ export default function SettingsPage() {
     </Card>
 
     <Card>
-      <CardHeader title="Avisos y privacidad" />
-      <div className="setting">
-        <div><strong>Aviso cuando el faucet esté listo</strong><span>Notificación del navegador. Funciona mientras tengas la aplicación abierta en una pestaña; no enviamos correos.</span></div>
-        <Switch label="Aviso cuando el faucet esté listo" checked={prefs.notifyFaucetReady} disabled={disabled} onChange={(value) => void toggleNotify(value)} />
-      </div>
+      <CardHeader title="Privacidad" />
       <div className="setting">
         <div><strong>Ocultar saldos por defecto</strong><span>Los saldos se muestran como ••• al abrir la aplicación. Puedes revelarlos con el icono del ojo.</span></div>
         <Switch label="Ocultar saldos por defecto" checked={prefs.hideBalance} disabled={disabled} onChange={(value) => void update({ hideBalance: value })} />
@@ -107,11 +93,11 @@ export default function SettingsPage() {
     <Card>
       <CardHeader title="Cuenta" description="Reglas de protección aplicadas a todas las cuentas." />
       <div className="setting">
-        <div><strong>Correo verificado</strong><span>Obligatorio para reclamar recompensas y validar referidos.</span></div>
+        <div><strong>Correo verificado</strong><span>Obligatorio para retirar y para que cuenten tus referidos.</span></div>
         <span className={`badge ${user?.emailConfirmed ? 'badge-success' : 'badge-warning'}`}>{user?.emailConfirmed ? 'Verificado' : 'Pendiente'}</span>
       </div>
       <div className="setting">
-        <div><strong>Una reclamación cada 24 horas</strong><span>Se aplica en el servidor. La racha se mantiene si reclamas en un máximo de 48 horas.</span></div>
+        <div><strong>Retiros revisados a mano</strong><span>Cada retiro se comprueba antes de pagarlo. Una cuenta por persona.</span></div>
         <span className="badge badge-success">Activo</span>
       </div>
       <div className="setting">
@@ -128,7 +114,7 @@ export default function SettingsPage() {
     </Card>
 
     <Card className="danger-card">
-      <CardHeader title="Eliminar cuenta" description="Se borrarán de forma permanente tu perfil, tus puntos, tu historial y tus referidos. No se puede deshacer." />
+      <CardHeader title="Eliminar cuenta" description="Se borrarán de forma permanente tu perfil, tus puntos, tu historial y tus referidos. Retira tu saldo antes: los puntos no retirados se pierden. No se puede deshacer." />
       <Button variant="danger" onClick={() => { setConfirmText(''); setDeleteError(''); setConfirmDelete(true) }}>Eliminar mi cuenta</Button>
     </Card>
 

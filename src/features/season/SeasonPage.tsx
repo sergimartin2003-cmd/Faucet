@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Gift, Target, TrendingUp, Users } from 'lucide-react'
+import { Check, Target, TrendingUp, Users } from 'lucide-react'
 import { Alert, Avatar, Badge, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Skeleton, Stat } from '../../ui'
 import { formatPoints, levelFromXp, summarizeLedger, XP_PER_LEVEL } from '../../lib/game'
 import { useLeaderboard, useLedger } from '../../lib/queries'
@@ -17,10 +17,9 @@ export default function SeasonPage() {
   const me = board.data?.find((entry) => entry.is_me)
 
   const missions = summary ? [
-    { key: 'days-7', icon: Gift, title: 'Reclama 7 días este mes', value: summary.monthClaimDays, goal: 7 },
-    { key: 'days-15', icon: Gift, title: 'Reclama 15 días este mes', value: summary.monthClaimDays, goal: 15 },
-    { key: 'points-300', icon: TrendingUp, title: 'Suma 300 puntos este mes', value: summary.monthPoints, goal: 300 },
-    { key: 'referral', icon: Users, title: 'Consigue un referido verificado', value: summary.monthReferrals, goal: 1 },
+    { key: 'points-1000', icon: TrendingUp, title: 'Gana 1.000 puntos este mes', value: summary.monthPoints, goal: 1000 },
+    { key: 'points-5000', icon: TrendingUp, title: 'Gana 5.000 puntos este mes', value: summary.monthPoints, goal: 5000 },
+    { key: 'referral', icon: Users, title: 'Consigue un referido activo', value: summary.monthReferrals, goal: 1 },
   ] : []
 
   return <>
@@ -28,11 +27,11 @@ export default function SeasonPage() {
     <div className="grid-stats">
       <Card><Stat label="Puntos este mes" value={summary ? (hidden ? '•••' : formatPoints(summary.monthPoints)) : <Skeleton width={70} height={28} />} /></Card>
       <Card><Stat label="Posición" value={board.isLoading ? <Skeleton width={50} height={28} /> : me ? `#${me.rank}` : '—'} hint={me ? undefined : 'Suma puntos para entrar'} /></Card>
-      <Card><Stat label="Nivel" value={level.level} hint={`${level.toNext} XP para el siguiente`} /></Card>
-      <Card><Stat label="XP total" value={summary ? formatPoints(summary.total) : <Skeleton width={60} height={28} />} hint={`${XP_PER_LEVEL} XP por nivel · 1 punto = 1 XP`} /></Card>
+      <Card><Stat label="Nivel" value={level.level} hint={`${formatPoints(level.toNext)} XP para el siguiente`} /></Card>
+      <Card><Stat label="XP total" value={summary ? formatPoints(summary.total) : <Skeleton width={60} height={28} />} hint={`${formatPoints(XP_PER_LEVEL)} XP por nivel · 1 punto ganado = 1 XP`} /></Card>
     </div>
     <Card>
-      <div className="row-between" style={{ marginBottom: 'var(--space-3)' }}><strong>Nivel {level.level}</strong><span className="muted tnum">{level.intoLevel} / {XP_PER_LEVEL} XP</span></div>
+      <div className="row-between" style={{ marginBottom: 'var(--space-3)' }}><strong>Nivel {level.level}</strong><span className="muted tnum">{formatPoints(level.intoLevel)} / {formatPoints(XP_PER_LEVEL)} XP</span></div>
       <ProgressBar value={level.percent} label="Progreso hacia el siguiente nivel" />
     </Card>
     <div className="grid-main">
@@ -57,7 +56,7 @@ export default function SeasonPage() {
           return <div key={mission.key} className="stack" style={{ gap: 'var(--space-2)' }}>
             <div className="row-between" style={{ flexWrap: 'nowrap' }}>
               <span className="row"><mission.icon size={16} className="faint" /><strong style={{ fontWeight: 550 }}>{mission.title}</strong></span>
-              {done ? <Badge tone="success"><Check size={12} />Hecha</Badge> : <span className="muted tnum">{Math.min(mission.value, mission.goal)} / {mission.goal}</span>}
+              {done ? <Badge tone="success"><Check size={12} />Hecha</Badge> : <span className="muted tnum">{formatPoints(Math.min(mission.value, mission.goal))} / {formatPoints(mission.goal)}</span>}
             </div>
             <ProgressBar value={(Math.min(mission.value, mission.goal) / mission.goal) * 100} label={mission.title} />
           </div>

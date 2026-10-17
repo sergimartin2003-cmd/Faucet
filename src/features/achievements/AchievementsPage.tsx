@@ -1,34 +1,31 @@
 import { useMemo, useState } from 'react'
-import { Award, Coins, Flame, Gift, ShieldCheck, User, Users, type LucideIcon } from 'lucide-react'
+import { ArrowUpFromLine, Award, ClipboardList, Coins, Users, type LucideIcon } from 'lucide-react'
 import { Badge, Card, PageHeader, ProgressBar, Skeleton } from '../../ui'
 import { evaluateAchievements, summarizeLedger } from '../../lib/game'
-import { useCompletedTasks, useFaucetState, useLedger, useReferralSummary } from '../../lib/queries'
+import { useLedger, useReferralSummary, useWithdrawals } from '../../lib/queries'
 
 const ICONS: Record<string, LucideIcon> = {
-  'first-claim': Gift, 'claims-10': Gift, 'claims-50': Gift,
-  'streak-3': Flame, 'streak-7': Flame, 'streak-30': Flame,
-  'points-100': Coins, 'points-500': Coins, 'points-1000': Coins,
-  profile: User, details: User, 'two-factor': ShieldCheck, referral: Users,
+  'first-offer': ClipboardList, 'offers-10': ClipboardList, 'offers-50': ClipboardList,
+  'points-1000': Coins, 'points-5000': Coins, 'points-25000': Coins,
+  withdrawal: ArrowUpFromLine, referral: Users, 'referrals-5': Users,
 }
 
 export default function AchievementsPage() {
   const ledger = useLedger()
-  const faucet = useFaucetState()
-  const tasks = useCompletedTasks()
+  const withdrawals = useWithdrawals()
   const referral = useReferralSummary()
   const [now] = useState(() => new Date())
-  const loading = ledger.isLoading || faucet.isLoading || tasks.isLoading
+  const loading = ledger.isLoading || withdrawals.isLoading
 
   const achievements = useMemo(() => {
     const summary = ledger.data ? summarizeLedger(ledger.data, now) : null
     return evaluateAchievements({
-      claimCount: summary?.claimCount ?? 0,
-      bestStreak: faucet.data?.bestStreak ?? 0,
+      offerCount: summary?.offerCount ?? 0,
       totalEarned: summary?.total ?? 0,
-      completedTasks: tasks.data?.map((task) => task.task_key) ?? [],
       rewardedReferrals: referral.data?.rewarded_referrals ?? 0,
+      paidWithdrawals: withdrawals.data?.filter((row) => row.status === 'paid').length ?? 0,
     })
-  }, [ledger.data, faucet.data, tasks.data, referral.data, now])
+  }, [ledger.data, withdrawals.data, referral.data, now])
 
   const unlocked = achievements.filter((achievement) => achievement.unlocked).length
 

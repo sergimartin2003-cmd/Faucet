@@ -51,7 +51,7 @@ function ProfileForm({ prefs }: { prefs: AccountPrefs }) {
 export default function ProfilePage() {
   const { prefs, loading, schemaReady } = useAccountPrefs()
   return <>
-    <PageHeader title="Perfil" description="Tu identidad dentro de Faucet. Completarla desbloquea tareas con recompensa." />
+    <PageHeader title="Perfil" description="Tu identidad dentro de Faucet: así apareces en la clasificación." />
     <Card>
       <CardHeader title="Datos personales" />
       {loading ? <div className="stack"><Skeleton height={56} /><Skeleton height={38} /><Skeleton height={38} /><Skeleton height={80} /></div>
