@@ -6,3 +6,9 @@ verify_jwt = true
 
 [functions.bitlabs-callback]
 verify_jwt = false
+
+[functions.faucet-claim]
+verify_jwt = false
+
+[functions.faucet-key]
+verify_jwt = true

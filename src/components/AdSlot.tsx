@@ -1,14 +1,15 @@
 import { aadsUnitId } from '../lib/site'
 import { t } from '../lib/i18n'
 
-// A-ADS adaptive banner. Renders nothing until VITE_AADS_UNIT_ID is set.
-export default function AdSlot({ className = '' }: { className?: string }) {
-  if (!aadsUnitId) return null
+// A-ADS adaptive banner. Renders nothing until VITE_AADS_UNIT_ID (or an explicit unit) is set.
+export default function AdSlot({ className = '', unit }: { className?: string; unit?: string | null }) {
+  const unitId = unit?.replace(/\D/g, '') || aadsUnitId
+  if (!unitId) return null
   return <aside className={`ad-slot ${className}`.trim()} aria-label={t('Publicidad')}>
     <span className="ad-slot-label">{t('Publicidad')}</span>
     <iframe
-      data-aa={aadsUnitId}
-      src={`https://acceptable.a-ads.com/${aadsUnitId}/?size=Adaptive`}
+      data-aa={unitId}
+      src={`https://acceptable.a-ads.com/${unitId}/?size=Adaptive`}
       title={t('Publicidad')}
       loading="lazy"
       referrerPolicy="no-referrer-when-downgrade"
