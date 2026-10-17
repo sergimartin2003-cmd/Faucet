@@ -61,7 +61,7 @@ export default function SettingsPage() {
     if (!supabase || confirmText !== 'ELIMINAR') return
     setBusy(true)
     setDeleteError('')
-    const { error } = await supabase.rpc('delete_my_account')
+    const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' })
     if (error) {
       setDeleteError('No se pudo eliminar la cuenta. Inténtalo de nuevo.')
       setBusy(false)

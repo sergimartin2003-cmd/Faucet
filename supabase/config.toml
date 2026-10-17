@@ -1,2 +1,5 @@
 [functions.offerwall-callback]
 verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = true

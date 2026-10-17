@@ -33,6 +33,7 @@ Nunca pongas la `service_role` key en variables `VITE_*`.
 2. En **Authentication → Providers** habilita Email y configura las URLs de sitio y redirección (local y producción).
 3. Configura un SMTP propio en **Authentication → SMTP Settings**: el SMTP por defecto de Supabase solo entrega a miembros del equipo y tiene límites muy bajos.
 4. Para los códigos de recuperación MFA, el proyecto debe tener habilitada esa función de Supabase Auth.
+5. Despliega la función `supabase/functions/delete-account` (con verificación de JWT): es la que usa Ajustes → Eliminar cuenta para borrar al usuario con la API de administración.
 
 ## Estructura
 
