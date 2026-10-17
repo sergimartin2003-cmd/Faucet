@@ -7,18 +7,25 @@ import { navigate } from '../../lib/router'
 import { supabase } from '../../lib/supabase'
 import { useSessionUser } from '../../app/sessionContext'
 import { useTheme, type ThemePreference } from '../../lib/theme'
+import { locale, setLang, t, useLang, type Lang } from '../../lib/i18n'
 
-const THEMES: { value: ThemePreference; label: string }[] = [
-  { value: 'system', label: 'Sistema' },
-  { value: 'light', label: 'Claro' },
-  { value: 'dark', label: 'Oscuro' },
+const themes = (): { value: ThemePreference; label: string }[] => [
+  { value: 'system', label: t('Sistema') },
+  { value: 'light', label: t('Claro') },
+  { value: 'dark', label: t('Oscuro') },
 ]
 
-const date = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' })
+const LANGS: { value: Lang; label: string }[] = [
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'English' },
+]
 
 export default function SettingsPage() {
   const { prefs, schemaReady, loading } = useAccountPrefs()
   const { preference, setPreference } = useTheme()
+  const lang = useLang()
+  // The word typed to confirm deletion follows the interface language.
+  const confirmWord = t('ELIMINAR')
   const user = useSessionUser()
   const toast = useToast()
   const queryClient = useQueryClient()
@@ -31,9 +38,9 @@ export default function SettingsPage() {
     setBusy(true)
     try {
       await saveSettings(partial)
-      toast('Ajustes guardados.')
+      toast(t('Ajustes guardados.'))
     } catch {
-      toast('No se pudieron guardar los ajustes.', 'error')
+      toast(t('No se pudieron guardar los ajustes.'), 'error')
     } finally {
       setBusy(false)
     }
@@ -43,17 +50,17 @@ export default function SettingsPage() {
     if (!supabase) return
     setBusy(true)
     const { error } = await supabase.auth.signOut({ scope: 'others' })
-    toast(error ? 'No se pudieron cerrar las otras sesiones.' : 'Se cerró la sesión en el resto de dispositivos.', error ? 'error' : 'success')
+    toast(error ? t('No se pudieron cerrar las otras sesiones.') : t('Se cerró la sesión en el resto de dispositivos.'), error ? 'error' : 'success')
     setBusy(false)
   }
 
   const deleteAccount = async () => {
-    if (!supabase || confirmText !== 'ELIMINAR') return
+    if (!supabase || confirmText !== confirmWord) return
     setBusy(true)
     setDeleteError('')
     const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' })
     if (error) {
-      setDeleteError('No se pudo eliminar la cuenta. Inténtalo de nuevo.')
+      setDeleteError(t('No se pudo eliminar la cuenta. Inténtalo de nuevo.'))
       setBusy(false)
       return
     }
@@ -65,63 +72,69 @@ export default function SettingsPage() {
   const disabled = busy || loading || !schemaReady
 
   return <>
-    <PageHeader title="Ajustes" description="Apariencia, privacidad y gestión de la cuenta." />
-    {!loading && !schemaReady && <Alert tone="warning">Las preferencias de cuenta aún no están disponibles en este entorno.</Alert>}
+    <PageHeader title={t('Ajustes')} description={t('Apariencia, privacidad y gestión de la cuenta.')} />
+    {!loading && !schemaReady && <Alert tone="warning">{t('Las preferencias de cuenta aún no están disponibles en este entorno.')}</Alert>}
 
     <Card>
-      <CardHeader title="Apariencia" />
+      <CardHeader title={t('Apariencia')} />
       <div className="setting">
-        <div><strong>Tema</strong><span>Elige el aspecto de la aplicación.</span></div>
-        <div className="tabs" role="radiogroup" aria-label="Tema">
-          {THEMES.map((theme) => <button key={theme.value} type="button" role="radio" className="tab" aria-checked={preference === theme.value} aria-selected={preference === theme.value} onClick={() => setPreference(theme.value)}>{theme.label}</button>)}
+        <div><strong>{t('Tema')}</strong><span>{t('Elige el aspecto de la aplicación.')}</span></div>
+        <div className="tabs" role="radiogroup" aria-label={t('Tema')}>
+          {themes().map((theme) => <button key={theme.value} type="button" role="radio" className="tab" aria-checked={preference === theme.value} aria-selected={preference === theme.value} onClick={() => setPreference(theme.value)}>{theme.label}</button>)}
+        </div>
+      </div>
+      <div className="setting">
+        <div><strong>{t('Idioma')}</strong><span>{t('Elige el idioma de la aplicación.')}</span></div>
+        <div className="tabs" role="radiogroup" aria-label={t('Idioma')}>
+          {LANGS.map((option) => <button key={option.value} type="button" role="radio" className="tab" lang={option.value} aria-checked={lang === option.value} aria-selected={lang === option.value} onClick={() => setLang(option.value)}>{option.label}</button>)}
         </div>
       </div>
     </Card>
 
     <Card>
-      <CardHeader title="Privacidad" />
+      <CardHeader title={t('Privacidad')} />
       <div className="setting">
-        <div><strong>Ocultar saldos por defecto</strong><span>Los saldos se muestran como ••• al abrir la aplicación. Puedes revelarlos con el icono del ojo.</span></div>
-        <Switch label="Ocultar saldos por defecto" checked={prefs.hideBalance} disabled={disabled} onChange={(value) => void update({ hideBalance: value })} />
+        <div><strong>{t('Ocultar saldos por defecto')}</strong><span>{t('Los saldos se muestran como ••• al abrir la aplicación. Puedes revelarlos con el icono del ojo.')}</span></div>
+        <Switch label={t('Ocultar saldos por defecto')} checked={prefs.hideBalance} disabled={disabled} onChange={(value) => void update({ hideBalance: value })} />
       </div>
       <div className="setting">
-        <div><strong>Aparecer en la clasificación</strong><span>Si lo desactivas, tu posición sigue contando pero tu nombre se muestra de forma anónima.</span></div>
-        <Switch label="Aparecer en la clasificación" checked={prefs.showOnLeaderboard} disabled={disabled} onChange={(value) => void update({ showOnLeaderboard: value })} />
+        <div><strong>{t('Aparecer en la clasificación')}</strong><span>{t('Si lo desactivas, tu posición sigue contando pero tu nombre se muestra de forma anónima.')}</span></div>
+        <Switch label={t('Aparecer en la clasificación')} checked={prefs.showOnLeaderboard} disabled={disabled} onChange={(value) => void update({ showOnLeaderboard: value })} />
       </div>
     </Card>
 
     <Card>
-      <CardHeader title="Cuenta" description="Reglas de protección aplicadas a todas las cuentas." />
+      <CardHeader title={t('Cuenta')} description={t('Reglas de protección aplicadas a todas las cuentas.')} />
       <div className="setting">
-        <div><strong>Correo verificado</strong><span>Obligatorio para retirar y para que cuenten tus referidos.</span></div>
-        <span className={`badge ${user?.emailConfirmed ? 'badge-success' : 'badge-warning'}`}>{user?.emailConfirmed ? 'Verificado' : 'Pendiente'}</span>
+        <div><strong>{t('Correo verificado')}</strong><span>{t('Obligatorio para retirar y para que cuenten tus referidos.')}</span></div>
+        <span className={`badge ${user?.emailConfirmed ? 'badge-success' : 'badge-warning'}`}>{user?.emailConfirmed ? t('Verificado') : t('Pendiente')}</span>
       </div>
       <div className="setting">
-        <div><strong>Retiros revisados a mano</strong><span>Cada retiro se comprueba antes de pagarlo. Una cuenta por persona.</span></div>
-        <span className="badge badge-success">Activo</span>
+        <div><strong>{t('Retiros revisados a mano')}</strong><span>{t('Cada retiro se comprueba antes de pagarlo. Una cuenta por persona.')}</span></div>
+        <span className="badge badge-success">{t('Activo')}</span>
       </div>
       <div className="setting">
-        <div><strong>Correos temporales</strong><span>Las direcciones desechables se rechazan al registrarse o cambiar de correo.</span></div>
-        <span className="badge badge-success">Activo</span>
+        <div><strong>{t('Correos temporales')}</strong><span>{t('Las direcciones desechables se rechazan al registrarse o cambiar de correo.')}</span></div>
+        <span className="badge badge-success">{t('Activo')}</span>
       </div>
       <div className="setting">
-        <div><strong>Miembro desde</strong><span>{user?.createdAt ? date.format(new Date(user.createdAt)) : '—'}</span></div>
+        <div><strong>{t('Miembro desde')}</strong><span>{user?.createdAt ? new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(user.createdAt)) : '—'}</span></div>
       </div>
       <div className="setting">
-        <div><strong>Cerrar otras sesiones</strong><span>Cierra la sesión en todos tus dispositivos excepto en este.</span></div>
-        <Button size="sm" disabled={busy} onClick={() => void signOutOthers()}>Cerrar otras sesiones</Button>
+        <div><strong>{t('Cerrar otras sesiones')}</strong><span>{t('Cierra la sesión en todos tus dispositivos excepto en este.')}</span></div>
+        <Button size="sm" disabled={busy} onClick={() => void signOutOthers()}>{t('Cerrar otras sesiones')}</Button>
       </div>
     </Card>
 
     <Card className="danger-card">
-      <CardHeader title="Eliminar cuenta" description="Se borrarán de forma permanente tu perfil, tus puntos, tu historial y tus referidos. Retira tu saldo antes: los puntos no retirados se pierden. No se puede deshacer." />
-      <Button variant="danger" onClick={() => { setConfirmText(''); setDeleteError(''); setConfirmDelete(true) }}>Eliminar mi cuenta</Button>
+      <CardHeader title={t('Eliminar cuenta')} description={t('Se borrarán de forma permanente tu perfil, tus puntos, tu historial y tus referidos. Retira tu saldo antes: los puntos no retirados se pierden. No se puede deshacer.')} />
+      <Button variant="danger" onClick={() => { setConfirmText(''); setDeleteError(''); setConfirmDelete(true) }}>{t('Eliminar mi cuenta')}</Button>
     </Card>
 
-    {confirmDelete && <Dialog title="Eliminar cuenta" onClose={() => setConfirmDelete(false)}
-      actions={<><Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={busy}>Cancelar</Button><Button variant="danger" loading={busy} disabled={confirmText !== 'ELIMINAR'} onClick={() => void deleteAccount()}>Eliminar definitivamente</Button></>}>
-      <p className="muted">Esta acción es irreversible. Para confirmar, escribe <strong>ELIMINAR</strong>.</p>
-      <div className="field" style={{ marginTop: 'var(--space-3)' }}><label htmlFor="delete-confirm">Confirmación</label><input id="delete-confirm" className="input" autoComplete="off" value={confirmText} onChange={(event) => setConfirmText(event.target.value)} /></div>
+    {confirmDelete && <Dialog title={t('Eliminar cuenta')} onClose={() => setConfirmDelete(false)}
+      actions={<><Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={busy}>{t('Cancelar')}</Button><Button variant="danger" loading={busy} disabled={confirmText !== confirmWord} onClick={() => void deleteAccount()}>{t('Eliminar definitivamente')}</Button></>}>
+      <p className="muted">{t('Esta acción es irreversible. Para confirmar, escribe')} <strong>{confirmWord}</strong>.</p>
+      <div className="field" style={{ marginTop: 'var(--space-3)' }}><label htmlFor="delete-confirm">{t('Confirmación')}</label><input id="delete-confirm" className="input" autoComplete="off" value={confirmText} onChange={(event) => setConfirmText(event.target.value)} /></div>
       {deleteError && <div style={{ marginTop: 'var(--space-3)' }}><Alert tone="error">{deleteError}</Alert></div>}
     </Dialog>}
   </>

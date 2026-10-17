@@ -12,19 +12,21 @@ import {
 import { ArrowDown, ArrowUp, ChevronsUpDown, Info, RefreshCw, Search, SearchX, WifiOff } from 'lucide-react'
 import { Alert, Badge, Button, Card, EmptyState, Skeleton } from '../../ui'
 import { useResolvedTheme } from '../../lib/theme'
+import { locale, t } from '../../lib/i18n'
 import './markets.css'
 
 const API_HOSTS = ['https://api.binance.com/api/v3', 'https://data-api.binance.vision/api/v3']
 const QUOTES = ['USDT', 'USDC', 'BTC', 'ETH'] as const
 type Quote = typeof QUOTES[number]
-const INTERVALS = [
+const INTERVAL_VALUES = ['15m', '1h', '4h', '1d', '1w'] as const
+type MarketInterval = typeof INTERVAL_VALUES[number]
+const intervals = (): { value: MarketInterval; label: string }[] => [
   { value: '15m', label: '15 min' },
   { value: '1h', label: '1 h' },
   { value: '4h', label: '4 h' },
-  { value: '1d', label: '1 d' },
-  { value: '1w', label: '1 sem' },
-] as const
-type MarketInterval = typeof INTERVALS[number]['value']
+  { value: '1d', label: t('1 d') },
+  { value: '1w', label: t('1 sem') },
+]
 type SortKey = 'pair' | 'price' | 'change' | 'volume'
 type SortDirection = 'asc' | 'desc'
 
@@ -41,7 +43,7 @@ class MarketsApiError extends Error {}
 
 function describeError(error: unknown, fallback: string) {
   if (error instanceof MarketsApiError) return error.message
-  if (error instanceof TypeError) return 'No se pudo conectar con Binance. Revisa tu conexión o inténtalo de nuevo en unos minutos.'
+  if (error instanceof TypeError) return t('No se pudo conectar con Binance. Revisa tu conexión o inténtalo de nuevo en unos minutos.')
   return fallback
 }
 
@@ -52,13 +54,13 @@ async function binanceGet<T>(path: string, signal: AbortSignal): Promise<T> {
       const response = await fetch(`${host}${path}`, { signal })
       if (response.ok) return await response.json() as T
       if (response.status === 429 || response.status === 418) {
-        throw new MarketsApiError('Binance limita temporalmente las consultas. Espera un minuto y reintenta.')
+        throw new MarketsApiError(t('Binance limita temporalmente las consultas. Espera un minuto y reintenta.'))
       }
       if (response.status === 451) {
-        lastError = new MarketsApiError('Binance no está disponible desde tu región.')
+        lastError = new MarketsApiError(t('Binance no está disponible desde tu región.'))
         continue
       }
-      lastError = new MarketsApiError(`Binance respondió con el error ${response.status}.`)
+      lastError = new MarketsApiError(t('Binance respondió con el error {status}.', { status: response.status }))
       if (response.status < 500) throw lastError
     } catch (error) {
       if (signal.aborted || error instanceof MarketsApiError) throw error
@@ -92,21 +94,20 @@ function parseCandles(rows: KlineRow[]): CandlestickData<UTCTimestamp>[] {
   }))
 }
 
-const priceFormats = new Map<number, Intl.NumberFormat>()
+const priceFormats = new Map<string, Intl.NumberFormat>()
 function formatPrice(value: number) {
   const digits = value >= 1000 ? 2 : value >= 1 ? 4 : value >= 0.01 ? 5 : 8
-  let format = priceFormats.get(digits)
+  const key = `${locale()}|${digits}`
+  let format = priceFormats.get(key)
   if (!format) {
-    format = new Intl.NumberFormat('es-ES', { minimumFractionDigits: Math.min(2, digits), maximumFractionDigits: digits, useGrouping: true })
-    priceFormats.set(digits, format)
+    format = new Intl.NumberFormat(locale(), { minimumFractionDigits: Math.min(2, digits), maximumFractionDigits: digits, useGrouping: true })
+    priceFormats.set(key, format)
   }
   return format.format(value)
 }
 
-const volumeFormat = new Intl.NumberFormat('es-ES', { notation: 'compact', maximumFractionDigits: 2 })
-const percentFormat = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const formatVolume = (value: number) => volumeFormat.format(value)
-const formatChange = (value: number) => `${value > 0 ? '+' : ''}${percentFormat.format(value)}%`
+const formatVolume = (value: number) => new Intl.NumberFormat(locale(), { notation: 'compact', maximumFractionDigits: 2 }).format(value)
+const formatChange = (value: number) => `${value > 0 ? '+' : ''}${new Intl.NumberFormat(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%`
 const changeClass = (value: number) => (value > 0 ? 'mk-up' : value < 0 ? 'mk-down' : 'mk-flat')
 
 function compareTickers(a: MarketTicker, b: MarketTicker, key: SortKey) {
@@ -141,7 +142,7 @@ export default function MarketsPage() {
         setError(null)
       } catch (loadError) {
         if (controller.signal.aborted) return
-        setError(describeError(loadError, 'No se pudieron cargar los mercados.'))
+        setError(describeError(loadError, t('No se pudieron cargar los mercados.')))
       } finally {
         if (!controller.signal.aborted) setRefreshing(false)
       }
@@ -200,15 +201,15 @@ export default function MarketsPage() {
               </div>
               : loading
                 ? <div className="mk-selected-price"><Skeleton width={120} height={26} /><Skeleton width={72} height={22} /></div>
-                : <span className="faint">Sin cotización disponible</span>}
+                : <span className="faint">{t('Sin cotización disponible')}</span>}
           </div>
-          <div className="tabs mk-tabs" role="group" aria-label="Intervalo de velas">
-            {INTERVALS.map((item) => <button key={item.value} type="button" className="tab" aria-pressed={interval === item.value} onClick={() => setInterval(item.value)}>{item.label}</button>)}
+          <div className="tabs mk-tabs" role="group" aria-label={t('Intervalo de velas')}>
+            {intervals().map((item) => <button key={item.value} type="button" className="tab" aria-pressed={interval === item.value} onClick={() => setInterval(item.value)}>{item.label}</button>)}
           </div>
         </div>
         <CandleChart symbol={selectedSymbol} interval={interval} />
         <div className="mk-chart-foot">
-          <span>Cada vela representa {INTERVALS.find((item) => item.value === interval)?.label}. Hora UTC.</span>
+          <span>{t('Cada vela representa {interval}. Hora UTC.', { interval: intervals().find((item) => item.value === interval)?.label ?? interval })}</span>
         </div>
       </Card>
 
@@ -216,34 +217,34 @@ export default function MarketsPage() {
         <div className="mk-toolbar">
           <div className="mk-search">
             <Search size={15} aria-hidden="true" />
-            <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar par, p. ej. SOL" aria-label="Buscar par por símbolo" autoComplete="off" spellCheck={false} />
+            <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Buscar par, p. ej. SOL')} aria-label={t('Buscar par por símbolo')} autoComplete="off" spellCheck={false} />
           </div>
-          <div className="tabs mk-tabs" role="group" aria-label="Moneda de cotización">
+          <div className="tabs mk-tabs" role="group" aria-label={t('Moneda de cotización')}>
             {QUOTES.map((item) => <button key={item} type="button" className="tab" aria-pressed={quote === item} onClick={() => setQuote(item)}>{item}</button>)}
           </div>
           <div className="mk-refresh">
-            <span className="faint mk-updated" aria-live="off">{lastUpdated ? `Actualizado ${lastUpdated.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : ''}</span>
-            <Button size="sm" variant="secondary" onClick={retry} loading={refreshing} aria-label="Actualizar mercados">{!refreshing && <RefreshCw size={14} aria-hidden="true" />}Actualizar</Button>
+            <span className="faint mk-updated" aria-live="off">{lastUpdated ? t('Actualizado {time}', { time: lastUpdated.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }) : ''}</span>
+            <Button size="sm" variant="secondary" onClick={retry} loading={refreshing} aria-label={t('Actualizar mercados')}>{!refreshing && <RefreshCw size={14} aria-hidden="true" />}{t('Actualizar')}</Button>
           </div>
         </div>
 
-        {error && tickers && <div className="mk-alert"><Alert tone="warning">{error} Se muestran los últimos datos recibidos.</Alert></div>}
+        {error && tickers && <div className="mk-alert"><Alert tone="warning">{error} {t('Se muestran los últimos datos recibidos.')}</Alert></div>}
 
         {!tickers && error
           ? <EmptyState
             icon={<WifiOff size={28} aria-hidden="true" />}
-            title="No se pudieron cargar los mercados"
+            title={t('No se pudieron cargar los mercados')}
             description={error}
-            action={<Button size="sm" variant="primary" onClick={retry} loading={refreshing}>Reintentar</Button>} />
+            action={<Button size="sm" variant="primary" onClick={retry} loading={refreshing}>{t('Reintentar')}</Button>} />
           : <div className="table-wrap mk-scroll">
             <table className="table mk-table">
-              <caption className="sr-only">Mercados spot de Binance cotizados en {quote}</caption>
+              <caption className="sr-only">{t('Mercados spot de Binance cotizados en {quote}', { quote })}</caption>
               <thead>
                 <tr>
-                  {sortHeader('pair', 'Par', 'mk-col-pair')}
-                  {sortHeader('price', 'Precio', 'num')}
+                  {sortHeader('pair', t('Par'), 'mk-col-pair')}
+                  {sortHeader('price', t('Precio'), 'num')}
                   {sortHeader('change', '24 h', 'num')}
-                  {sortHeader('volume', 'Volumen 24 h', 'num mk-col-volume')}
+                  {sortHeader('volume', t('Volumen 24 h'), 'num mk-col-volume')}
                 </tr>
               </thead>
               <tbody>
@@ -257,10 +258,10 @@ export default function MarketsPage() {
                   const isSelected = ticker.symbol === selectedSymbol
                   return <tr key={ticker.symbol} className="mk-row" data-selected={isSelected} onClick={() => setSelectedSymbol(ticker.symbol)}>
                     <td className="mk-col-pair">
-                      <button type="button" className="mk-pair" aria-current={isSelected ? 'true' : undefined} aria-label={`Ver gráfico de ${ticker.base}/${ticker.quote}`} onClick={(event) => { event.stopPropagation(); setSelectedSymbol(ticker.symbol) }}>
+                      <button type="button" className="mk-pair" aria-current={isSelected ? 'true' : undefined} aria-label={t('Ver gráfico de {pair}', { pair: `${ticker.base}/${ticker.quote}` })} onClick={(event) => { event.stopPropagation(); setSelectedSymbol(ticker.symbol) }}>
                         <span className="mk-base">{ticker.base}</span><span className="mk-quote">/{ticker.quote}</span>
                       </button>
-                      <span className="mk-vol-inline tnum">Vol. {formatVolume(ticker.volume)}</span>
+                      <span className="mk-vol-inline tnum">{t('Vol.')} {formatVolume(ticker.volume)}</span>
                     </td>
                     <td className="num">{formatPrice(ticker.price)}</td>
                     <td className={`num ${changeClass(ticker.change)}`}>{formatChange(ticker.change)}</td>
@@ -269,15 +270,15 @@ export default function MarketsPage() {
                 })}
               </tbody>
             </table>
-            {!loading && !rows.length && <EmptyState icon={<SearchX size={28} aria-hidden="true" />} title="Sin resultados" description={query ? `Ningún par ${quote} coincide con "${query}".` : `No hay pares ${quote} disponibles.`} />}
+            {!loading && !rows.length && <EmptyState icon={<SearchX size={28} aria-hidden="true" />} title={t('Sin resultados')} description={query ? t('Ningún par {quote} coincide con «{query}».', { quote, query }) : t('No hay pares {quote} disponibles.', { quote })} />}
           </div>}
 
         {tickers && rows.length > 0 && <div className="mk-list-foot faint">
-          {rows.length > ROW_LIMIT ? `Mostrando los ${ROW_LIMIT} primeros de ${rows.length} pares. Usa el buscador para encontrar otros.` : `${rows.length} ${rows.length === 1 ? 'par' : 'pares'}`}
+          {rows.length > ROW_LIMIT ? t('Mostrando los {limit} primeros de {total} pares. Usa el buscador para encontrar otros.', { limit: ROW_LIMIT, total: rows.length }) : rows.length === 1 ? t('1 par') : t('{n} pares', { n: rows.length })}
         </div>}
       </Card>
 
-      <p className="mk-note"><Info size={14} aria-hidden="true" />Datos públicos de Binance, solo informativos. No es asesoramiento financiero.</p>
+      <p className="mk-note"><Info size={14} aria-hidden="true" />{t('Datos públicos de Binance, solo informativos. No es asesoramiento financiero.')}</p>
     </div>
   )
 }
@@ -340,7 +341,7 @@ function CandleChart({ symbol, interval }: { symbol: string; interval: MarketInt
       width: container.clientWidth,
       height: container.clientHeight,
       ...themedOptions(),
-      localization: { locale: 'es-ES' },
+      localization: { locale: locale() },
       rightPriceScale: { ...themedOptions().rightPriceScale, scaleMargins: { top: 0.1, bottom: 0.1 } },
       timeScale: { ...themedOptions().timeScale, timeVisible: true, secondsVisible: false, rightOffset: 6 },
     })
@@ -373,7 +374,7 @@ function CandleChart({ symbol, interval }: { symbol: string; interval: MarketInt
         const series = seriesRef.current
         if (controller.signal.aborted || !series) return
         const candles = parseCandles(rows)
-        if (!candles.length) throw new MarketsApiError('Binance no devolvió velas para este par.')
+        if (!candles.length) throw new MarketsApiError(t('Binance no devolvió velas para este par.'))
         if (loaded) {
           for (const candle of candles) series.update(candle)
         } else {
@@ -384,7 +385,7 @@ function CandleChart({ symbol, interval }: { symbol: string; interval: MarketInt
         }
       } catch (loadError) {
         if (controller.signal.aborted || loaded) return
-        setState({ key, error: describeError(loadError, 'No se pudo cargar el gráfico.') })
+        setState({ key, error: describeError(loadError, t('No se pudo cargar el gráfico.')) })
       }
     }
     void load()
@@ -399,8 +400,8 @@ function CandleChart({ symbol, interval }: { symbol: string; interval: MarketInt
   const failed = !loading && state.error !== null
 
   return <div className="mk-chart-wrap">
-    <div ref={containerRef} className="mk-chart" role="img" aria-label={`Gráfico de velas de ${formatSymbol(symbol)}, intervalo ${interval}`} />
-    {loading && <div className="mk-chart-overlay" role="status" aria-label="Cargando gráfico">
+    <div ref={containerRef} className="mk-chart" role="img" aria-label={t('Gráfico de velas de {pair}, intervalo {interval}', { pair: formatSymbol(symbol), interval })} />
+    {loading && <div className="mk-chart-overlay" role="status" aria-label={t('Cargando gráfico')}>
       <div className="mk-chart-skeleton" aria-hidden="true">
         {[52, 70, 44, 82, 60, 90, 48, 66, 76, 40, 58, 72].map((height, index) => <Skeleton key={index} width="100%" height={`${height}%`} />)}
       </div>
@@ -408,9 +409,9 @@ function CandleChart({ symbol, interval }: { symbol: string; interval: MarketInt
     {failed && <div className="mk-chart-overlay">
       <EmptyState
         icon={<WifiOff size={28} aria-hidden="true" />}
-        title="No se pudo cargar el gráfico"
+        title={t('No se pudo cargar el gráfico')}
         description={state.error ?? undefined}
-        action={<Button size="sm" variant="secondary" onClick={() => setRetryToken((token) => token + 1)}>Reintentar</Button>} />
+        action={<Button size="sm" variant="secondary" onClick={() => setRetryToken((token) => token + 1)}>{t('Reintentar')}</Button>} />
     </div>}
   </div>
 }
