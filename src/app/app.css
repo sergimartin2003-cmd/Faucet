@@ -44,7 +44,7 @@
 .menu-item:hover { background: var(--surface-2); text-decoration: none; }
 .menu-item svg { color: var(--text-muted); }
 
-.content { width: 100%; max-width: 1180px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-16); display: grid; gap: var(--space-6); align-content: start; flex: 1; }
+.content { width: 100%; max-width: 1180px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-16); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); align-content: start; flex: 1; }
 .page-header { display: grid; gap: var(--space-2); }
 .page-header h1 { font-size: var(--text-2xl); }
 .page-header p { color: var(--text-muted); max-width: 640px; }

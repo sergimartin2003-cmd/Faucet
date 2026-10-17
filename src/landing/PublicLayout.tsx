@@ -91,8 +91,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             {navLinks().map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}
           </nav>
           <div className="landing-header-actions">
-            <ThemeToggle />
-            <LangSwitch className="btn btn-ghost btn-sm" />
+            <span className="landing-header-prefs"><ThemeToggle /><LangSwitch className="btn btn-ghost btn-sm" /></span>
             {signedInEmail
               ? <>
                 <span className="landing-user" title={signedInEmail}>{signedInEmail}</span>
@@ -109,6 +108,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <nav className="landing-container" aria-label={t('Secciones')}>
             {navLinks().map((link) => <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>{link.label}</a>)}
             {!signedInEmail && <button type="button" className="landing-mobile-login" onClick={() => api.openAuth('login')}>{t('Iniciar sesión')}</button>}
+            <div className="landing-mobile-prefs"><ThemeToggle /><LangSwitch className="btn btn-ghost btn-sm" /></div>
           </nav>
         </div>}
       </header>
