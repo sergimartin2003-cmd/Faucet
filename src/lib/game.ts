@@ -1,3 +1,5 @@
+import { locale, t } from './i18n'
+
 export const DAY_MS = 24 * 60 * 60 * 1000
 // One level for every 1.000 points (1 USD) earned.
 export const XP_PER_LEVEL = 1000
@@ -6,15 +8,18 @@ export type LedgerSource = 'daily_faucet' | 'earn_task' | 'offerwall' | 'referra
 export type LedgerRow = { created_at: string; source_type: LedgerSource | string; points: number }
 
 // Older sources (faucet, tasks, in-house surveys...) were retired but stay in the history.
-export const LEDGER_SOURCE_LABELS: Record<string, string> = {
-  offerwall: 'Ofertas y encuestas',
-  referral: 'Referido activo',
-  daily_faucet: 'Faucet diario (retirado)',
-  earn_task: 'Tarea (retirada)',
-  survey: 'Encuesta interna (retirada)',
-  video: 'Vídeo (retirado)',
-  trivia: 'Trivia (retirada)',
-  scratch: 'Rasca y gana (retirado)',
+const ledgerSourceLabel = (source: string) => {
+  switch (source) {
+    case 'offerwall': return t('Ofertas y encuestas')
+    case 'referral': return t('Referido activo')
+    case 'daily_faucet': return t('Faucet diario (retirado)')
+    case 'earn_task': return t('Tarea (retirada)')
+    case 'survey': return t('Encuesta interna (retirada)')
+    case 'video': return t('Vídeo (retirado)')
+    case 'trivia': return t('Trivia (retirada)')
+    case 'scratch': return t('Rasca y gana (retirado)')
+    default: return null
+  }
 }
 
 export function levelFromXp(xp: number) {
@@ -23,7 +28,7 @@ export function levelFromXp(xp: number) {
   return { level: Math.floor(safe / XP_PER_LEVEL) + 1, intoLevel, toNext: XP_PER_LEVEL - intoLevel, percent: (intoLevel / XP_PER_LEVEL) * 100 }
 }
 
-export const formatPoints = (value: number) => value.toLocaleString('es-ES')
+export const formatPoints = (value: number) => value.toLocaleString(locale())
 
 export function utcMonthStart(now: Date) {
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
@@ -83,20 +88,21 @@ export type AchievementContext = {
 
 export type Achievement = { key: string; title: string; description: string; goal: number; value: (context: AchievementContext) => number }
 
-export const ACHIEVEMENTS: Achievement[] = [
-  { key: 'first-offer', title: 'Primer paso', description: 'Completa tu primera oferta o encuesta.', goal: 1, value: (c) => c.offerCount },
-  { key: 'offers-10', title: 'Constancia', description: 'Completa 10 ofertas o encuestas.', goal: 10, value: (c) => c.offerCount },
-  { key: 'offers-50', title: 'Habitual', description: 'Completa 50 ofertas o encuestas.', goal: 50, value: (c) => c.offerCount },
-  { key: 'points-1000', title: 'Primer dólar', description: 'Gana 1.000 puntos en total.', goal: 1000, value: (c) => c.totalEarned },
-  { key: 'points-5000', title: 'Listo para retirar', description: 'Gana 5.000 puntos en total.', goal: 5000, value: (c) => c.totalEarned },
-  { key: 'points-25000', title: '25 dólares', description: 'Gana 25.000 puntos en total.', goal: 25000, value: (c) => c.totalEarned },
-  { key: 'withdrawal', title: 'Primer cobro', description: 'Recibe tu primer retiro en crypto.', goal: 1, value: (c) => c.paidWithdrawals },
-  { key: 'referral', title: 'Embajador', description: 'Consigue un referido activo.', goal: 1, value: (c) => c.rewardedReferrals },
-  { key: 'referrals-5', title: 'Comunidad', description: 'Consigue 5 referidos activos.', goal: 5, value: (c) => c.rewardedReferrals },
+// A function so titles and descriptions follow the current language.
+export const achievements = (): Achievement[] => [
+  { key: 'first-offer', title: t('Primer paso'), description: t('Completa tu primera oferta o encuesta.'), goal: 1, value: (c) => c.offerCount },
+  { key: 'offers-10', title: t('Constancia'), description: t('Completa 10 ofertas o encuestas.'), goal: 10, value: (c) => c.offerCount },
+  { key: 'offers-50', title: t('Habitual'), description: t('Completa 50 ofertas o encuestas.'), goal: 50, value: (c) => c.offerCount },
+  { key: 'points-1000', title: t('Primer dólar'), description: t('Gana 1.000 puntos en total.'), goal: 1000, value: (c) => c.totalEarned },
+  { key: 'points-5000', title: t('Listo para retirar'), description: t('Gana 5.000 puntos en total.'), goal: 5000, value: (c) => c.totalEarned },
+  { key: 'points-25000', title: t('25 dólares'), description: t('Gana 25.000 puntos en total.'), goal: 25000, value: (c) => c.totalEarned },
+  { key: 'withdrawal', title: t('Primer cobro'), description: t('Recibe tu primer retiro en crypto.'), goal: 1, value: (c) => c.paidWithdrawals },
+  { key: 'referral', title: t('Embajador'), description: t('Consigue un referido activo.'), goal: 1, value: (c) => c.rewardedReferrals },
+  { key: 'referrals-5', title: t('Comunidad'), description: t('Consigue 5 referidos activos.'), goal: 5, value: (c) => c.rewardedReferrals },
 ]
 
 export function evaluateAchievements(context: AchievementContext) {
-  return ACHIEVEMENTS.map((achievement) => {
+  return achievements().map((achievement) => {
     const value = Math.min(achievement.goal, achievement.value(context))
     return { ...achievement, progress: value, unlocked: value >= achievement.goal }
   })
@@ -110,5 +116,5 @@ export function toCsv(rows: (string | number)[][]) {
 }
 
 export function describeLedgerEntry(sourceType: string) {
-  return LEDGER_SOURCE_LABELS[sourceType] ?? 'Recompensa'
+  return ledgerSourceLabel(sourceType) ?? t('Recompensa')
 }

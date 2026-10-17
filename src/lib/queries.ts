@@ -1,12 +1,13 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
+import { t } from './i18n'
 import type { LedgerRow } from './game'
 import type { WithdrawalMethod, WithdrawalStatus } from './payouts'
 
 const enabled = Boolean(supabase)
 
 function client() {
-  if (!supabase) throw new Error('Supabase no está configurado.')
+  if (!supabase) throw new Error(t('Supabase no está configurado.'))
   return supabase
 }
 
@@ -47,7 +48,7 @@ export const useReferralSummary = () => useQuery({
   enabled,
   queryFn: async (): Promise<ReferralSummary> => {
     const { data, error } = await client().rpc('get_referral_summary')
-    if (error || !data?.[0]) throw error ?? new Error('Sin datos de referidos')
+    if (error || !data?.[0]) throw error ?? new Error(t('Sin datos de referidos'))
     return data[0]
   },
 })
@@ -185,13 +186,13 @@ export function useProcessWithdrawal() {
 
 export function withdrawalErrorMessage(error: unknown) {
   const text = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as { message: unknown }).message) : ''
-  if (text.includes('Email confirmation')) return 'Confirma tu correo electrónico antes de retirar.'
-  if (text.includes('Invalid withdrawal amount')) return 'La cantidad no es válida. El mínimo es 5.000 puntos.'
-  if (text.includes('Invalid withdrawal address')) return 'La dirección no es válida para la moneda elegida.'
-  if (text.includes('already pending')) return 'Ya tienes un retiro pendiente. Espera a que se procese.'
-  if (text.includes('Insufficient balance')) return 'No tienes puntos suficientes.'
-  if (text.includes('Transaction reference')) return 'Indica el hash de la transacción o la referencia del pago.'
-  if (text.includes('already processed')) return 'Este retiro ya se había procesado.'
-  if (text.includes('Admin only')) return 'Solo un administrador puede hacer esto.'
-  return 'No se pudo completar la acción. Inténtalo de nuevo en unos minutos.'
+  if (text.includes('Email confirmation')) return t('Confirma tu correo electrónico antes de retirar.')
+  if (text.includes('Invalid withdrawal amount')) return t('La cantidad no es válida. El mínimo es 5.000 puntos.')
+  if (text.includes('Invalid withdrawal address')) return t('La dirección no es válida para la moneda elegida.')
+  if (text.includes('already pending')) return t('Ya tienes un retiro pendiente. Espera a que se procese.')
+  if (text.includes('Insufficient balance')) return t('No tienes puntos suficientes.')
+  if (text.includes('Transaction reference')) return t('Indica el hash de la transacción o la referencia del pago.')
+  if (text.includes('already processed')) return t('Este retiro ya se había procesado.')
+  if (text.includes('Admin only')) return t('Solo un administrador puede hacer esto.')
+  return t('No se pudo completar la acción. Inténtalo de nuevo en unos minutos.')
 }

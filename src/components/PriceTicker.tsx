@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp } from 'lucide-react'
+import { t } from '../lib/i18n'
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'LINKUSDT']
 const HOSTS = ['https://api.binance.com/api/v3', 'https://data-api.binance.vision/api/v3']
@@ -36,7 +37,7 @@ export default function PriceTicker() {
     </span>
   })
 
-  return <div className="ticker" role="region" aria-label="Precios de mercado (Binance, 24 h)">
+  return <div className="ticker" role="region" aria-label={t('Precios de mercado (Binance, 24 h)')}>
     <div className="ticker-track">
       <div className="ticker-group">{items}</div>
       <div className="ticker-group" aria-hidden="true">{items}</div>

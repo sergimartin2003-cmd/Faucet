@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
+import { t } from './i18n'
 
 export type AccountPrefs = {
   displayName: string
@@ -31,6 +32,16 @@ export const COUNTRIES: [string, string][] = [
   ['NI', 'Nicaragua'], ['PA', 'Panamá'], ['PY', 'Paraguay'], ['PE', 'Perú'], ['PT', 'Portugal'],
   ['PR', 'Puerto Rico'], ['UY', 'Uruguay'], ['VE', 'Venezuela'], ['DE', 'Alemania'], ['FR', 'Francia'],
   ['GB', 'Reino Unido'], ['IT', 'Italia'], ['OT', 'Otro'],
+]
+
+// Country names in the current language (COUNTRIES keeps the Spanish ones).
+export const countries = (): [string, string][] => [
+  ['AR', t('Argentina')], ['BO', t('Bolivia')], ['BR', t('Brasil')], ['CL', t('Chile')], ['CO', t('Colombia')],
+  ['CR', t('Costa Rica')], ['CU', t('Cuba')], ['DO', t('República Dominicana')], ['EC', t('Ecuador')], ['SV', t('El Salvador')],
+  ['ES', t('España')], ['US', t('Estados Unidos')], ['GT', t('Guatemala')], ['HN', t('Honduras')], ['MX', t('México')],
+  ['NI', t('Nicaragua')], ['PA', t('Panamá')], ['PY', t('Paraguay')], ['PE', t('Perú')], ['PT', t('Portugal')],
+  ['PR', t('Puerto Rico')], ['UY', t('Uruguay')], ['VE', t('Venezuela')], ['DE', t('Alemania')], ['FR', t('Francia')],
+  ['GB', t('Reino Unido')], ['IT', t('Italia')], ['OT', t('Otro')],
 ]
 
 export const PREFS_EVENT = 'faucet:prefs-changed'
@@ -76,7 +87,7 @@ export async function loadAccountPrefs(): Promise<PrefsLoad> {
 }
 
 export async function saveProfile(values: Pick<AccountPrefs, 'displayName' | 'country' | 'bio' | 'avatarColor'>) {
-  if (!supabase) throw new Error('Supabase no está configurado.')
+  if (!supabase) throw new Error(t('Supabase no está configurado.'))
   const name = values.displayName.trim()
   const { data, error } = await supabase.auth.updateUser({ data: { display_name: name || null } })
   if (error) throw error
@@ -91,9 +102,9 @@ export async function saveProfile(values: Pick<AccountPrefs, 'displayName' | 'co
 }
 
 export async function saveSettings(values: Partial<Pick<AccountPrefs, 'notifyFaucetReady' | 'hideBalance' | 'showOnLeaderboard'>>) {
-  if (!supabase) throw new Error('Supabase no está configurado.')
+  if (!supabase) throw new Error(t('Supabase no está configurado.'))
   const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData.user) throw userError ?? new Error('Sesión no disponible.')
+  if (userError || !userData.user) throw userError ?? new Error(t('Sesión no disponible.'))
   const row: Record<string, unknown> = { user_id: userData.user.id }
   if (values.notifyFaucetReady !== undefined) row.notify_faucet_ready = values.notifyFaucetReady
   if (values.hideBalance !== undefined) row.hide_balance = values.hideBalance

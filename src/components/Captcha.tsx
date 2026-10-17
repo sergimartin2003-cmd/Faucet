@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { turnstileSiteKey } from '../lib/turnstile'
 import { useResolvedTheme } from '../lib/theme'
+import { getLang, t } from '../lib/i18n'
 
 type TurnstileApi = {
   render: (container: HTMLElement, options: Record<string, unknown>) => string
@@ -19,7 +20,7 @@ function loadScript() {
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`)
     const script = existing ?? Object.assign(document.createElement('script'), { src: SCRIPT_SRC, async: true })
     script.addEventListener('load', () => resolve(), { once: true })
-    script.addEventListener('error', () => reject(new Error('No se pudo cargar el captcha.')), { once: true })
+    script.addEventListener('error', () => reject(new Error(t('No se pudo cargar el captcha.'))), { once: true })
     if (!existing) document.head.appendChild(script)
   })
 }
@@ -38,6 +39,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
       widgetId = window.turnstile.render(element, {
         sitekey: turnstileSiteKey,
         theme,
+        language: getLang(),
         callback: (token: string) => onToken(token),
         'expired-callback': () => onToken(''),
         'error-callback': () => onToken(''),

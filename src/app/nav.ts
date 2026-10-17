@@ -1,51 +1,54 @@
 import { ArrowUpFromLine, Award, BadgeCheck, BarChart3, CircleHelp, ClipboardList, Dices, History, LayoutDashboard, Landmark, Receipt, Settings, ShieldCheck, Trophy, User, Users, type LucideIcon } from 'lucide-react'
-import { GAME_LABELS, GAME_SLUGS, type CasinoGame } from '../lib/casino'
+import { GAME_SLUGS, gameLabel, type CasinoGame } from '../lib/casino'
+import { t } from '../lib/i18n'
 import { bitlabsToken } from '../lib/site'
 
 export type NavItem = { slug: string; label: string; icon: LucideIcon; title: string }
 
-export const NAV_GROUPS: { label: string; items: NavItem[]; adminOnly?: boolean }[] = [
-  { label: 'Principal', items: [
-    { slug: '', label: 'Resumen', icon: LayoutDashboard, title: 'Resumen' },
-    { slug: 'retirar', label: 'Retirar', icon: ArrowUpFromLine, title: 'Retirar' },
+// Functions, not constants: labels are translated when the shell renders.
+export const navGroups = (): { label: string; items: NavItem[]; adminOnly?: boolean }[] => [
+  { label: t('Principal'), items: [
+    { slug: '', label: t('Resumen'), icon: LayoutDashboard, title: t('Resumen') },
+    { slug: 'retirar', label: t('Retirar'), icon: ArrowUpFromLine, title: t('Retirar') },
   ] },
-  { label: 'Ganar', items: [
-    ...(bitlabsToken ? [{ slug: 'ofertas', label: 'Ofertas y encuestas', icon: ClipboardList, title: 'Ofertas y encuestas' }] : []),
-    { slug: 'referidos', label: 'Referidos', icon: Users, title: 'Referidos' },
+  { label: t('Ganar'), items: [
+    ...(bitlabsToken ? [{ slug: 'ofertas', label: t('Ofertas y encuestas'), icon: ClipboardList, title: t('Ofertas y encuestas') }] : []),
+    { slug: 'referidos', label: t('Referidos'), icon: Users, title: t('Referidos') },
   ] },
-  { label: 'Casino', items: [
-    { slug: 'casino', label: 'Juegos', icon: Dices, title: 'Casino' },
-    { slug: 'casino/apuestas', label: 'Mis apuestas', icon: Receipt, title: 'Mis apuestas' },
-    { slug: 'casino/juego-justo', label: 'Juego justo', icon: BadgeCheck, title: 'Juego justo' },
+  { label: t('Casino'), items: [
+    { slug: 'casino', label: t('Juegos'), icon: Dices, title: t('Casino') },
+    { slug: 'casino/apuestas', label: t('Mis apuestas'), icon: Receipt, title: t('Mis apuestas') },
+    { slug: 'casino/juego-justo', label: t('Juego justo'), icon: BadgeCheck, title: t('Juego justo') },
   ] },
-  { label: 'Progreso', items: [
-    { slug: 'temporada', label: 'Temporada', icon: Trophy, title: 'Temporada' },
-    { slug: 'logros', label: 'Logros', icon: Award, title: 'Logros' },
-    { slug: 'historial', label: 'Historial', icon: History, title: 'Historial de puntos' },
+  { label: t('Progreso'), items: [
+    { slug: 'temporada', label: t('Temporada'), icon: Trophy, title: t('Temporada') },
+    { slug: 'logros', label: t('Logros'), icon: Award, title: t('Logros') },
+    { slug: 'historial', label: t('Historial'), icon: History, title: t('Historial de puntos') },
   ] },
-  { label: 'Explorar', items: [
-    { slug: 'mercados', label: 'Mercados', icon: BarChart3, title: 'Mercados' },
+  { label: t('Explorar'), items: [
+    { slug: 'mercados', label: t('Mercados'), icon: BarChart3, title: t('Mercados') },
   ] },
-  { label: 'Cuenta', items: [
-    { slug: 'perfil', label: 'Perfil', icon: User, title: 'Perfil' },
-    { slug: 'seguridad', label: 'Seguridad', icon: ShieldCheck, title: 'Seguridad' },
-    { slug: 'ajustes', label: 'Ajustes', icon: Settings, title: 'Ajustes' },
-    { slug: 'ayuda', label: 'Ayuda', icon: CircleHelp, title: 'Ayuda' },
+  { label: t('Cuenta'), items: [
+    { slug: 'perfil', label: t('Perfil'), icon: User, title: t('Perfil') },
+    { slug: 'seguridad', label: t('Seguridad'), icon: ShieldCheck, title: t('Seguridad') },
+    { slug: 'ajustes', label: t('Ajustes'), icon: Settings, title: t('Ajustes') },
+    { slug: 'ayuda', label: t('Ayuda'), icon: CircleHelp, title: t('Ayuda') },
   ] },
-  { label: 'Administración', adminOnly: true, items: [
-    { slug: 'admin', label: 'Retiros', icon: Landmark, title: 'Administración' },
+  { label: t('Administración'), adminOnly: true, items: [
+    { slug: 'admin', label: t('Retiros'), icon: Landmark, title: t('Administración') },
   ] },
 ]
 
-export const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items)
+export const navItems = () => navGroups().flatMap((group) => group.items)
 
 // Game pages live under /dashboard/casino/<game> and are reached from the lobby.
-export const CASINO_GAME_ITEMS: NavItem[] = (Object.keys(GAME_SLUGS) as CasinoGame[]).map((game) => ({
-  slug: `casino/${GAME_SLUGS[game]}`, label: GAME_LABELS[game], icon: Dices, title: `${GAME_LABELS[game]} · Casino`,
+const CASINO_GAMES = Object.keys(GAME_SLUGS) as CasinoGame[]
+export const casinoGameItems = (): NavItem[] => CASINO_GAMES.map((game) => ({
+  slug: `casino/${GAME_SLUGS[game]}`, label: gameLabel(game), icon: Dices, title: `${gameLabel(game)} · ${t('Casino')}`,
 }))
 
 // Sidebar entry that should look active for a given page.
-export const navSlugFor = (slug: string) => (CASINO_GAME_ITEMS.some((item) => item.slug === slug) ? 'casino' : slug)
+export const navSlugFor = (slug: string) => (CASINO_GAMES.some((game) => slug === `casino/${GAME_SLUGS[game]}`) ? 'casino' : slug)
 export const pathFor = (slug: string) => (slug ? `/dashboard/${slug}` : '/dashboard')
 export const slugFromPath = (pathname: string) => pathname.replace(/^\/dashboard\/?/, '').replace(/\/$/, '')
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
 import { CheckCircle2, CircleAlert, Info, TriangleAlert } from 'lucide-react'
+import { t } from '../lib/i18n'
 
 export function Card({ children, className = '', pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
   return <section className={`card${pad ? ' card-pad' : ''} ${className}`.trim()}>{children}</section>
@@ -53,7 +54,7 @@ export function Switch({ checked, onChange, label, disabled }: { checked: boolea
   return <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} className="switch" onClick={() => onChange(!checked)} />
 }
 
-export function Spinner() { return <span className="spinner" role="status" aria-label="Cargando" /> }
+export function Spinner() { return <span className="spinner" role="status" aria-label={t('Cargando')} /> }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'md' | 'lg'; loading?: boolean }
 

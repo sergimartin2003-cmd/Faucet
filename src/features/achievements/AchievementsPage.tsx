@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { ArrowUpFromLine, Award, ClipboardList, Coins, Users, type LucideIcon } from 'lucide-react'
 import { Badge, Card, PageHeader, ProgressBar, Skeleton } from '../../ui'
-import { evaluateAchievements, summarizeLedger } from '../../lib/game'
+import { evaluateAchievements, formatPoints, summarizeLedger } from '../../lib/game'
 import { useLedger, useReferralSummary, useWithdrawals } from '../../lib/queries'
+import { t } from '../../lib/i18n'
 
 const ICONS: Record<string, LucideIcon> = {
   'first-offer': ClipboardList, 'offers-10': ClipboardList, 'offers-50': ClipboardList,
@@ -30,7 +31,7 @@ export default function AchievementsPage() {
   const unlocked = achievements.filter((achievement) => achievement.unlocked).length
 
   return <>
-    <PageHeader title="Logros" description={loading ? 'Cargando tu progreso…' : `${unlocked} de ${achievements.length} logros desbloqueados.`} />
+    <PageHeader title={t('Logros')} description={loading ? t('Cargando tu progreso…') : t('{unlocked} de {total} logros desbloqueados.', { unlocked, total: achievements.length })} />
     {loading ? <div className="achievement-grid">{Array.from({ length: 6 }, (_, key) => <Skeleton key={key} height={120} style={{ borderRadius: 12 }} />)}</div>
       : <div className="achievement-grid">{achievements.map((achievement) => {
         const Icon = ICONS[achievement.key] ?? Award
@@ -38,12 +39,12 @@ export default function AchievementsPage() {
           <div className="achievement-head">
             <span className="achievement-icon"><Icon size={18} /></span>
             <div style={{ flex: 1 }}><h3 style={{ fontSize: 'var(--text-base)' }}>{achievement.title}</h3></div>
-            {achievement.unlocked && <Badge tone="success">Logrado</Badge>}
+            {achievement.unlocked && <Badge tone="success">{t('Logrado')}</Badge>}
           </div>
           <p>{achievement.description}</p>
           <div className="stack" style={{ gap: 6 }}>
             <ProgressBar value={(achievement.progress / achievement.goal) * 100} label={achievement.title} />
-            <span className="faint tnum" style={{ fontSize: 'var(--text-xs)' }}>{achievement.progress.toLocaleString('es-ES')} / {achievement.goal.toLocaleString('es-ES')}</span>
+            <span className="faint tnum" style={{ fontSize: 'var(--text-xs)' }}>{formatPoints(achievement.progress)} / {formatPoints(achievement.goal)}</span>
           </div>
         </Card>
       })}</div>}

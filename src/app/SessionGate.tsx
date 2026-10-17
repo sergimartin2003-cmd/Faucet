@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { applyPendingReferral } from '../lib/referral'
 import { navigate } from '../lib/router'
 import { Alert, Button, Spinner } from '../ui'
+import { t } from '../lib/i18n'
 import { SessionContext, type SessionUser } from './sessionContext'
 
 type GateStatus = 'loading' | 'signed-out' | 'ready' | 'mfa-required' | 'error'
@@ -52,9 +53,9 @@ export default function SessionGate({ children }: { children: ReactNode }) {
     if (status === 'signed-out' && !import.meta.env.DEV) navigate('/?login=1', { replace: true })
   }, [status])
 
-  if (status === 'loading') return <div className="gate-screen"><Spinner /><span>Verificando sesión…</span></div>
+  if (status === 'loading') return <div className="gate-screen"><Spinner /><span>{t('Verificando sesión…')}</span></div>
   if (status === 'mfa-required') return <MfaChallenge onVerified={() => setStatus('ready')} />
-  if (status === 'error') return <div className="gate-screen"><Alert tone="error">No se pudo verificar la sesión. Recarga la página o vuelve a iniciar sesión.</Alert></div>
+  if (status === 'error') return <div className="gate-screen"><Alert tone="error">{t('No se pudo verificar la sesión. Recarga la página o vuelve a iniciar sesión.')}</Alert></div>
   if (status === 'signed-out' && !import.meta.env.DEV) return null
   return <SessionContext.Provider value={user}>{children}</SessionContext.Provider>
 }
@@ -77,10 +78,10 @@ function MfaChallenge({ onVerified }: { onVerified: () => void }) {
         const factor = data.totp.find((item) => item.status === 'verified')
         if (active) {
           setFactorId(factor?.id ?? '')
-          if (!factor && !data.recovery_code.length) setErrorMessage('No se encontró un factor verificado ni códigos de recuperación. Contacta con soporte para recuperar el acceso.')
+          if (!factor && !data.recovery_code.length) setErrorMessage(t('No se encontró un factor verificado ni códigos de recuperación. Contacta con soporte para recuperar el acceso.'))
         }
       } catch {
-        if (active) setErrorMessage('No se pudo cargar tu factor de autenticación.')
+        if (active) setErrorMessage(t('No se pudo cargar tu factor de autenticación.'))
       } finally {
         if (active) setLoading(false)
       }
@@ -105,8 +106,8 @@ function MfaChallenge({ onVerified }: { onVerified: () => void }) {
       onVerified()
     } catch {
       setErrorMessage(mode === 'totp'
-        ? 'El código no es válido o ha caducado. Comprueba tu app autenticadora e inténtalo otra vez.'
-        : 'El código de recuperación no es válido o ya se utilizó.')
+        ? t('El código no es válido o ha caducado. Comprueba tu app autenticadora e inténtalo otra vez.')
+        : t('El código de recuperación no es válido o ya se utilizó.'))
       setCode('')
     } finally {
       setBusy(false)
@@ -121,19 +122,19 @@ function MfaChallenge({ onVerified }: { onVerified: () => void }) {
   return <main className="gate-screen">
     <form className="card card-pad gate-card" onSubmit={(event) => void verify(event)}>
       <span className="gate-icon"><ShieldCheck size={20} /></span>
-      <h1>Verificación en dos pasos</h1>
-      <p className="muted">{mode === 'totp' ? 'Introduce el código de seis cifras de tu app autenticadora.' : 'Introduce uno de tus códigos de recuperación sin usar.'}</p>
+      <h1>{t('Verificación en dos pasos')}</h1>
+      <p className="muted">{mode === 'totp' ? t('Introduce el código de seis cifras de tu app autenticadora.') : t('Introduce uno de tus códigos de recuperación sin usar.')}</p>
       {factorId && <div className="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={mode === 'totp'} className="tab" onClick={() => switchMode('totp')}>App autenticadora</button>
-        <button type="button" role="tab" aria-selected={mode === 'recovery'} className="tab" onClick={() => switchMode('recovery')}>Código de recuperación</button>
+        <button type="button" role="tab" aria-selected={mode === 'totp'} className="tab" onClick={() => switchMode('totp')}>{t('App autenticadora')}</button>
+        <button type="button" role="tab" aria-selected={mode === 'recovery'} className="tab" onClick={() => switchMode('recovery')}>{t('Código de recuperación')}</button>
       </div>}
       <div className="field">
-        <label htmlFor="mfa-code">{mode === 'totp' ? 'Código TOTP' : 'Código de recuperación'}</label>
+        <label htmlFor="mfa-code">{mode === 'totp' ? t('Código TOTP') : t('Código de recuperación')}</label>
         <input id="mfa-code" className="input tnum" autoFocus inputMode={mode === 'totp' ? 'numeric' : 'text'} autoComplete={mode === 'totp' ? 'one-time-code' : 'off'} maxLength={mode === 'totp' ? 6 : 40} value={code} onChange={(event) => setCode(mode === 'totp' ? event.target.value.replace(/\D/g, '').slice(0, 6) : event.target.value)} />
       </div>
       {errorMessage && <Alert tone="error">{errorMessage}</Alert>}
-      <Button variant="primary" type="submit" size="lg" loading={busy} disabled={loading || !valid}>Verificar y continuar</Button>
-      <button type="button" className="link-button" onClick={() => void signOut()}>Cerrar sesión</button>
+      <Button variant="primary" type="submit" size="lg" loading={busy} disabled={loading || !valid}>{t('Verificar y continuar')}</Button>
+      <button type="button" className="link-button" onClick={() => void signOut()}>{t('Cerrar sesión')}</button>
     </form>
   </main>
 }
