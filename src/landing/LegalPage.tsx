@@ -141,6 +141,8 @@ const PRIVACY: Section[] = [
         <li><strong>Supabase:</strong> alojamiento de la base de datos y del sistema de autenticación.</li>
         <li><strong>Vercel:</strong> alojamiento de la aplicación web.</li>
         <li><strong>Cloudflare Turnstile:</strong> verificación anti-bots, solo cuando está activada. Puede tratar datos técnicos del navegador necesarios para distinguir personas de bots.</li>
+        <li><strong>BitLabs:</strong> ofertas y encuestas remuneradas con puntos, solo cuando están activadas. Recibe tu identificador interno de usuario para poder acreditarte las tareas; las encuestas pueden pedirte datos que tú decides facilitar directamente a BitLabs bajo su propia política de privacidad.</li>
+        <li><strong>A-ADS:</strong> red de publicidad, solo cuando está activada. Muestra anuncios dentro de un marco aislado y puede tratar datos técnicos de tu navegador (IP, agente de usuario) para servirlos y contarlos.</li>
       </ul>
     </>,
   },
@@ -148,7 +150,7 @@ const PRIVACY: Section[] = [
     title: 'Almacenamiento local y cookies',
     body: <>
       <p>La aplicación usa el almacenamiento local de tu navegador para guardar tu sesión, tu preferencia de tema y, si llegas con un enlace de invitación, el código de referido hasta que se aplique.</p>
-      <p>No usamos cookies publicitarias ni herramientas de seguimiento de terceros.</p>
+      <p>No instalamos cookies publicitarias propias. Cuando la publicidad o las ofertas están activas, A-ADS y BitLabs se cargan dentro de marcos aislados y pueden usar su propio almacenamiento según sus políticas.</p>
     </>,
   },
   {

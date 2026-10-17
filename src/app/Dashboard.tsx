@@ -8,6 +8,7 @@ import { useFaucetReminder } from '../lib/faucetReminder'
 import { formatPoints } from '../lib/game'
 import { Avatar, Skeleton } from '../ui'
 import ToastProvider from '../ui/ToastProvider'
+import AdSlot from '../components/AdSlot'
 import { useFaucetStatus } from '../features/faucet/useFaucetStatus'
 import { CASINO_GAME_ITEMS, NAV_GROUPS, NAV_ITEMS, LEGACY_SECTIONS, navSlugFor, pathFor, slugFromPath } from './nav'
 import { PrivacyContext, useSessionUser, usePrivacy } from './sessionContext'
@@ -30,6 +31,7 @@ const pages: Record<string, ReturnType<typeof lazy>> = {
   seguridad: lazy(() => import('../features/security/SecurityPage')),
   ajustes: lazy(() => import('../features/settings/SettingsPage')),
   ayuda: lazy(() => import('../features/help/HelpPage')),
+  ofertas: lazy(() => import('../features/offers/OffersPage')),
   casino: lazy(() => import('../features/casino/CasinoLobby')),
   'casino/apuestas': lazy(() => import('../features/casino/CasinoHistoryPage')),
   'casino/juego-justo': lazy(() => import('../features/casino/FairnessPage')),
@@ -114,6 +116,7 @@ function Shell() {
         <Suspense fallback={<PageSkeleton />}>
           {Page ? <Page /> : <NotFound />}
         </Suspense>
+        <AdSlot className="ad-slot-dashboard" />
       </main>
     </div>
   </div>

@@ -4,13 +4,14 @@ import { Alert, Button, Card, CardHeader, PageHeader, Skeleton, Stat } from '../
 import { useToast } from '../../ui/toastContext'
 import { formatPoints } from '../../lib/game'
 import { useReferralSummary } from '../../lib/queries'
+import { siteOrigin } from '../../lib/site'
 
 export default function ReferralsPage() {
   const referral = useReferralSummary()
   const toast = useToast()
   const [copied, setCopied] = useState(false)
   const summary = referral.data
-  const link = summary ? `${window.location.origin}/?ref=${summary.code}` : ''
+  const link = summary ? `${siteOrigin()}/?ref=${summary.code}` : ''
 
   const copy = async () => {
     try {

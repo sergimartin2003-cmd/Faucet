@@ -154,3 +154,7 @@
 .claim-gauge-amount { font-family: var(--font-display); font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--text); }
 .claim-gauge-amount small { display: block; margin-top: 2px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
 .claim-gauge-time { font-family: var(--font-mono); font-size: 25px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+/* Third-party ad slot (A-ADS) */
+.ad-slot { display: grid; gap: 4px; justify-items: center; margin-block: var(--space-6); }
+.ad-slot-label { color: var(--text-faint); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }

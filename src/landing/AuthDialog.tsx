@@ -5,6 +5,7 @@ import Captcha from '../components/Captcha'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { turnstileSiteKey } from '../lib/turnstile'
 import { navigate } from '../lib/router'
+import { siteOrigin } from '../lib/site'
 import type { AuthMode } from './auth'
 
 const TITLES: Record<AuthMode, string> = {
@@ -106,7 +107,7 @@ export default function AuthDialog({ mode, onModeChange, signedInEmail, onClose 
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: address,
           password,
-          options: { data: { display_name: name.trim() || undefined }, emailRedirectTo: window.location.origin, ...captchaOptions },
+          options: { data: { display_name: name.trim() || undefined }, emailRedirectTo: siteOrigin(), ...captchaOptions },
         })
         if (signUpError) throw signUpError
         if (data.session) {
@@ -116,7 +117,7 @@ export default function AuthDialog({ mode, onModeChange, signedInEmail, onClose 
           setMessage('Cuenta creada. Revisa tu correo y confirma la dirección antes de iniciar sesión.')
         }
       } else if (mode === 'recovery') {
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(address, { redirectTo: window.location.origin, ...captchaOptions })
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(address, { redirectTo: siteOrigin(), ...captchaOptions })
         if (resetError) throw resetError
         setMessage('Si existe una cuenta con este correo, recibirás un enlace para restablecer la contraseña.')
       } else if (mode === 'update-password') {
@@ -166,7 +167,7 @@ export default function AuthDialog({ mode, onModeChange, signedInEmail, onClose 
     setError('')
     setMessage('')
     try {
-      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: window.location.origin } })
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: siteOrigin() } })
       if (resendError) throw resendError
       setCanResend(false)
       setMessage('Correo reenviado. Revisa la bandeja de entrada y la carpeta de spam.')

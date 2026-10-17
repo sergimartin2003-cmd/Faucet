@@ -1,5 +1,6 @@
-import { Award, BadgeCheck, BarChart3, CircleHelp, ClipboardList, Dices, Gift, History, LayoutDashboard, ListChecks, MonitorPlay, Receipt, Settings, ShieldCheck, Sparkles, Ticket, Trophy, User, Users, type LucideIcon } from 'lucide-react'
+import { Award, BadgeCheck, BarChart3, CircleHelp, ClipboardList, Dices, Gift, History, LayoutDashboard, ListChecks, MonitorPlay, Receipt, Wallet, Settings, ShieldCheck, Sparkles, Ticket, Trophy, User, Users, type LucideIcon } from 'lucide-react'
 import { GAME_LABELS, GAME_SLUGS, type CasinoGame } from '../lib/casino'
+import { bitlabsToken } from '../lib/site'
 
 export type NavItem = { slug: string; label: string; icon: LucideIcon; title: string }
 
@@ -14,6 +15,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     { slug: 'trivia', label: 'Trivia diaria', icon: Sparkles, title: 'Trivia diaria' },
     { slug: 'rasca', label: 'Rasca y gana', icon: Ticket, title: 'Rasca y gana' },
     { slug: 'tareas', label: 'Tareas', icon: ListChecks, title: 'Tareas' },
+    ...(bitlabsToken ? [{ slug: 'ofertas', label: 'Ofertas y encuestas', icon: Wallet, title: 'Ofertas y encuestas' }] : []),
   ] },
   { label: 'Casino', items: [
     { slug: 'casino', label: 'Juegos', icon: Dices, title: 'Casino' },

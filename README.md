@@ -24,6 +24,8 @@ Comprobaciones: `npm run lint`, `npm test`, `npm run build`. Se ejecutan tambié
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Clave pública (o `VITE_SUPABASE_ANON_KEY` en proyectos antiguos) |
 | `VITE_TURNSTILE_SITE_KEY` | Opcional. Clave de Cloudflare Turnstile; actívalo también en Supabase → Authentication → Attack Protection |
 | `VITE_CONTACT_EMAIL` | Opcional. Correo de contacto mostrado en Ayuda y en las páginas legales |
+| `VITE_BITLABS_TOKEN` | Opcional. App token de BitLabs: activa la sección Ofertas y encuestas |
+| `VITE_AADS_UNIT_ID` | Opcional. ID numérico de un bloque de anuncios de A-ADS: muestra un banner en la portada y en el panel |
 
 Nunca pongas la `service_role` key en variables `VITE_*`.
 
@@ -66,9 +68,12 @@ Doce juegos (dados, limbo, crash, cara o cruz, ruleta, tragaperras, plinko, keno
 - *Provably fair*: `HMAC_SHA256(semilla_servidor, "semilla_cliente:nonce:cursor")`. El jugador ve el hash de la semilla antes de jugar y la puede revelar desde Juego justo para verificar cualquier jugada en el navegador (`src/lib/casino.ts`).
 - RTP entre el 96 % (tragaperras) y el 99 %. Apuesta máxima 100.000 puntos y pago máximo por jugada 1.000.000.
 
-## Offerwalls
+## Ofertas y publicidad
 
-No hay ningún proveedor activo. `supabase/functions/offerwall-callback` es una base genérica (firma HMAC, antigüedad, idempotencia) que debe adaptarse al contrato del proveedor elegido antes de usarse.
+- **BitLabs** (ofertas y encuestas): `supabase/functions/bitlabs-callback` recibe las recompensas, verifica la firma HMAC-SHA1 con el secreto `BITLABS_APP_SECRET` y acredita los puntos una sola vez por transacción (`credit_offerwall_completion`). URL de callback en BitLabs:
+  `https://<ref>.supabase.co/functions/v1/bitlabs-callback?uid=[%USER:UID%]&tx=[%TX%]&val=[%VALUE:CURRENCY%]&type=[%TYPE%]`. Las conciliaciones negativas se aceptan pero no restan puntos.
+- **A-ADS**: banner adaptativo (`src/components/AdSlot.tsx`) cuando `VITE_AADS_UNIT_ID` está definido.
+- `supabase/functions/offerwall-callback` sigue siendo una base genérica para otros proveedores.
 
 ## Mercados
 

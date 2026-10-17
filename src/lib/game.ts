@@ -12,7 +12,7 @@ export const LEDGER_SOURCE_LABELS: Record<string, string> = {
   daily_faucet: 'Faucet diario',
   earn_task: 'Tarea',
   referral: 'Referido verificado',
-  offerwall: 'Oferta de proveedor',
+  offerwall: 'Ofertas y encuestas',
   survey: 'Encuesta',
   video: 'Vídeo visto',
   trivia: 'Trivia diaria',

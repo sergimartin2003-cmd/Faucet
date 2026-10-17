@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import AdSlot from '../components/AdSlot'
 import { Droplet, Menu, Monitor, Moon, Sun, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { captureReferralFromUrl } from '../lib/referral'
@@ -110,6 +111,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       </header>
 
       <main id="contenido" className="landing-main">{children}</main>
+      <div className="landing-container"><AdSlot /></div>
 
       <footer className="landing-footer">
         <div className="landing-container landing-footer-inner">

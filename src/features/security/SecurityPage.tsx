@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Badge, Button, Card, CardHeader, Dialog, PageHeader, Skeleton } from '../../ui'
 import { useToast } from '../../ui/toastContext'
 import { supabase } from '../../lib/supabase'
+import { siteOrigin } from '../../lib/site'
 import { errorCode } from '../../lib/queries'
 import { useSessionUser } from '../../app/sessionContext'
 
@@ -217,7 +218,7 @@ function AccessCard() {
     try {
       const { data: allowed } = await supabase.rpc('is_email_allowed', { p_email: email })
       if (allowed === false) throw new Error('blocked')
-      const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: window.location.origin })
+      const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: siteOrigin() })
       if (error) throw error
       setNewEmail('')
       toast('Te hemos enviado un enlace de confirmación. Puede que debas confirmarlo también desde tu correo actual.')
@@ -251,7 +252,7 @@ function AccessCard() {
   const sendReset = async () => {
     if (!supabase || !user?.email) return
     setBusy('reset')
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: window.location.origin })
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: siteOrigin() })
     toast(error ? 'No se pudo enviar el correo de recuperación.' : 'Enlace enviado. Revisa tu correo y la carpeta de spam.', error ? 'error' : 'success')
     setBusy('')
   }
