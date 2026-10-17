@@ -80,6 +80,23 @@ const TERMS: Section[] = [
     </>,
   },
   {
+    title: 'Faucets de creadores',
+    body: <>
+      <p>Cualquier usuario mayor de edad con el correo verificado puede crear faucets en {siteName}. {siteName} proporciona el software y el alojamiento; la faucet pertenece a su creador.</p>
+      <ul>
+        <li>Cada faucet se paga desde la cuenta de FaucetPay de su creador, con su propia API key. {siteName} no recibe, custodia ni transmite esos fondos, y no responde de los pagos que FaucetPay no realice.</li>
+        <li>El creador es responsable de mantener su faucet con saldo, de la configuración (moneda, recompensa, límites) y de cumplir las condiciones de FaucetPay y la normativa que le sea aplicable, incluida la fiscal.</li>
+        <li>Como contraprestación por el servicio, una parte de las visitas de cada faucet muestra anuncios de {siteName} (el porcentaje se indica en el panel del creador). Si está activada, cada pago incluye además una comisión de la plataforma que se envía desde la faucet del creador a {siteName}; su porcentaje se muestra antes de crear o mantener la faucet.</li>
+        <li>Está prohibido usar una faucet para juegos de azar, esquemas piramidales, estafas, contenido ilegal o para engañar a quien reclama. {siteName} puede pausar o suspender cualquier faucet que incumpla estas normas o que acumule pagos fallidos.</li>
+        <li>Quien reclama necesita una cuenta de FaucetPay. Los reclamos están limitados por tiempo, por dirección y por IP, y protegidos con captcha.</li>
+      </ul>
+    </>,
+  },
+  {
+    title: 'Faucets destacadas',
+    body: <p>El creador puede destacar una faucet activa en el directorio pagando con sus puntos: 1.000 puntos (1 USD) por día, entre 1 y 30 días. Los puntos usados para destacar no son reembolsables y no se pueden retirar. Destacar no garantiza un número de visitas ni de reclamos.</p>,
+  },
+  {
     title: 'Uso aceptable y medidas antifraude',
     body: <>
       <ul>
@@ -121,6 +138,7 @@ const PRIVACY: Section[] = [
         <li><strong>Datos de perfil opcionales:</strong> nombre visible, país, biografía y color de avatar.</li>
         <li><strong>Actividad:</strong> registro de puntos (ofertas, encuestas, referidos y anulaciones), nivel, logros, historial de recompensas y jugadas del casino.</li>
         <li><strong>Retiros:</strong> moneda elegida, dirección de destino o Pay ID de Binance, importes, estado y referencia de cada pago.</li>
+        <li><strong>Faucets:</strong> si creas una faucet, su configuración y la API key de FaucetPay, que guardamos cifrada y nunca se muestra. Si reclamas en una faucet, la dirección, correo o usuario de FaucetPay que indiques, un identificador cifrado de tu IP (para aplicar los límites antiabuso) y el resultado de cada pago. El creador de la faucet ve la dirección de destino y el resultado de los pagos de su faucet.</li>
         <li><strong>Seguridad:</strong> eventos de autenticación, como inicios de sesión y verificación en dos pasos, gestionados por Supabase Auth.</li>
       </ul>
       <p>No solicitamos datos bancarios ni tarjetas. Podemos pedirte que verifiques tu identidad o tu edad si lo exige la normativa o para prevenir fraudes.</p>
@@ -148,6 +166,7 @@ const PRIVACY: Section[] = [
         <li><strong>Vercel:</strong> alojamiento de la aplicación web.</li>
         <li><strong>Cloudflare Turnstile:</strong> verificación anti-bots, solo cuando está activada. Puede tratar datos técnicos del navegador necesarios para distinguir personas de bots.</li>
         <li><strong>BitLabs:</strong> ofertas y encuestas remuneradas con puntos, solo cuando están activadas. Recibe tu identificador interno de usuario para poder acreditarte las tareas; las encuestas pueden pedirte datos que tú decides facilitar directamente a BitLabs bajo su propia política de privacidad.</li>
+        <li><strong>FaucetPay:</strong> procesa los pagos de las faucets de creadores. Recibe la dirección, correo o usuario de destino, el importe y tu IP para sus controles antifraude, bajo su propia política de privacidad.</li>
         <li><strong>Binance y las redes blockchain:</strong> reciben el Pay ID o la dirección de destino y el importe para efectuar el pago. Las transacciones en una blockchain son públicas y permanentes.</li>
         <li><strong>A-ADS:</strong> red de publicidad, solo cuando está activada. Muestra anuncios dentro de un marco aislado y puede tratar datos técnicos de tu navegador (IP, agente de usuario) para servirlos y contarlos.</li>
       </ul>
@@ -260,6 +279,23 @@ const TERMS_EN: Section[] = [
     </>,
   },
   {
+    title: 'Creator faucets',
+    body: <>
+      <p>Any adult user with a verified email can create faucets on {siteName}. {siteName} provides the software and hosting; the faucet belongs to its creator.</p>
+      <ul>
+        <li>Each faucet is paid from its creator's FaucetPay account, using their own API key. {siteName} does not receive, hold or transmit those funds, and is not liable for payouts FaucetPay does not make.</li>
+        <li>The creator is responsible for keeping the faucet funded, for its settings (currency, reward, limits) and for complying with FaucetPay's terms and any law that applies to them, including tax law.</li>
+        <li>In return for the service, a share of each faucet's page views shows {siteName} ads (the percentage is shown in the creator panel). When enabled, each payout also includes a platform fee sent from the creator's faucet to {siteName}; its percentage is shown before creating or keeping the faucet.</li>
+        <li>Faucets must not be used for gambling, pyramid schemes, scams, illegal content or to mislead claimers. {siteName} may pause or suspend any faucet that breaks these rules or accumulates failed payouts.</li>
+        <li>Claimers need a FaucetPay account. Claims are limited by time, address and IP, and protected by a captcha.</li>
+      </ul>
+    </>,
+  },
+  {
+    title: 'Featured faucets',
+    body: <p>A creator can feature an active faucet in the directory by paying with their points: 1,000 points (1 USD) per day, from 1 to 30 days. Points spent on featuring are non-refundable and cannot be withdrawn. Featuring does not guarantee any number of visits or claims.</p>,
+  },
+  {
     title: 'Acceptable use and anti-fraud measures',
     body: <>
       <ul>
@@ -301,6 +337,7 @@ const PRIVACY_EN: Section[] = [
         <li><strong>Optional profile data:</strong> display name, country, bio and avatar color.</li>
         <li><strong>Activity:</strong> points log (offers, surveys, referrals and reversals), level, achievements, reward history and casino plays.</li>
         <li><strong>Withdrawals:</strong> chosen currency, destination address or Binance Pay ID, amounts, status and reference of each payment.</li>
+        <li><strong>Faucets:</strong> if you create a faucet, its settings and its FaucetPay API key, which we store encrypted and never display. If you claim from a faucet, the FaucetPay address, email or username you enter, an encrypted identifier of your IP (to enforce anti-abuse limits) and the result of each payout. The faucet's creator sees the destination and the result of the payouts from their faucet.</li>
         <li><strong>Security:</strong> authentication events, such as sign-ins and two-step verification, managed by Supabase Auth.</li>
       </ul>
       <p>We do not ask for bank details or cards. We may ask you to verify your identity or age if required by law or to prevent fraud.</p>
@@ -328,6 +365,7 @@ const PRIVACY_EN: Section[] = [
         <li><strong>Vercel:</strong> hosting of the web app.</li>
         <li><strong>Cloudflare Turnstile:</strong> anti-bot verification, only when enabled. It may process technical browser data needed to tell people and bots apart.</li>
         <li><strong>BitLabs:</strong> paid offers and surveys rewarded with points, only when enabled. It receives your internal user identifier so it can credit your tasks; surveys may ask you for data that you choose to provide directly to BitLabs under its own privacy policy.</li>
+        <li><strong>FaucetPay:</strong> processes the payouts of creator faucets. It receives the destination address, email or username, the amount and your IP for its anti-fraud checks, under its own privacy policy.</li>
         <li><strong>Binance and the blockchain networks:</strong> they receive the Pay ID or destination address and the amount to make the payment. Transactions on a blockchain are public and permanent.</li>
         <li><strong>A-ADS:</strong> advertising network, only when enabled. It shows ads inside an isolated frame and may process technical data from your browser (IP, user agent) to serve and count them.</li>
       </ul>

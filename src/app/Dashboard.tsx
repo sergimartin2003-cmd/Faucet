@@ -21,6 +21,7 @@ const pages: Record<string, ReturnType<typeof lazy>> = {
   '': lazy(() => import('../features/overview/OverviewPage')),
   retirar: lazy(() => import('../features/withdraw/WithdrawPage')),
   admin: lazy(() => import('../features/admin/AdminPage')),
+  faucets: lazy(() => import('../features/creator/MyFaucetsPage')),
   temporada: lazy(() => import('../features/season/SeasonPage')),
   logros: lazy(() => import('../features/achievements/AchievementsPage')),
   referidos: lazy(() => import('../features/referrals/ReferralsPage')),

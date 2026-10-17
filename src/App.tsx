@@ -8,6 +8,8 @@ import LandingPage from './landing/LandingPage'
 const LegalPage = lazy(() => import('./landing/LegalPage'))
 const SessionGate = lazy(() => import('./app/SessionGate'))
 const Dashboard = lazy(() => import('./app/Dashboard'))
+const FaucetDirectory = lazy(() => import('./landing/FaucetDirectory'))
+const FaucetPublicPage = lazy(() => import('./landing/FaucetPublicPage'))
 
 function NotFound() {
   useEffect(() => { document.title = `${t('Página no encontrada')} · ${siteName}` }, [])
@@ -24,6 +26,8 @@ export default function App() {
     {pathname === '/' ? <LandingPage />
       : pathname === '/terminos' ? <LegalPage kind="terms" />
         : pathname === '/privacidad' ? <LegalPage kind="privacy" />
+          : pathname === '/faucets' ? <FaucetDirectory />
+          : pathname.startsWith('/f/') ? <FaucetPublicPage slug={decodeURIComponent(pathname.slice(3)).toLowerCase()} />
           : pathname === '/dashboard' || pathname.startsWith('/dashboard/') ? <SessionGate><Dashboard /></SessionGate>
             : <NotFound />}
   </Suspense>

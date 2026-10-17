@@ -35,9 +35,10 @@ export default function FaucetDirectory() {
       {faucets.isLoading ? <div className="faucet-grid">{Array.from({ length: 6 }, (_, key) => <Skeleton key={key} height={170} style={{ borderRadius: 14 }} />)}</div>
         : !faucets.data?.length ? <div className="card card-pad"><EmptyState icon={<Droplets size={22} />} title={t('Todavía no hay faucets aquí')} description={t('Sé el primero: crea tu faucet en dos minutos con tu cuenta de FaucetPay.')}
           action={<Link to="/dashboard/faucets" className="btn btn-primary btn-sm">{t('Crear mi faucet')}</Link>} /></div>
-          : <div className="faucet-grid">{faucets.data.map((faucet) => <Link key={faucet.slug} to={`/f/${faucet.slug}`} className="faucet-card">
+          : <div className="faucet-grid">{faucets.data.map((faucet) => <Link key={faucet.slug} to={`/f/${faucet.slug}`} className={`faucet-card${faucet.featured ? ' is-featured' : ''}`}>
             <div className="faucet-card-top">
               <span className="faucet-coin">{faucet.currency}</span>
+              {faucet.featured && <Badge tone="accent">{t('Destacada')}</Badge>}
               {!faucet.funded && <Badge tone="warning">{t('Sin fondos')}</Badge>}
             </div>
             <h3>{faucet.name}</h3>

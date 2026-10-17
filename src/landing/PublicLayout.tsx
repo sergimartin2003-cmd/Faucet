@@ -15,6 +15,7 @@ import { AuthDialogContext, type AuthDialogApi, type AuthMode } from './auth'
 import './landing.css'
 
 const navLinks = () => [
+  { href: '/faucets', label: t('Faucets') },
   { href: '/#ganar', label: t('Ganar') },
   { href: '/#como-funciona', label: t('Cómo funciona') },
   { href: '/#reglas', label: t('Reglas') },
@@ -123,6 +124,8 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             <p>{t('Gana puntos con encuestas y ofertas y retíralos en crypto: 1.000 puntos = 1 $. Solo mayores de 18 años.')}</p>
           </div>
           <nav className="landing-footer-links" aria-label={t('Legal')}>
+            <Link to="/faucets">{t('Faucets')}</Link>
+            <Link to="/dashboard/faucets">{t('Crear una faucet')}</Link>
             <Link to="/terminos">{t('Términos de uso')}</Link>
             <Link to="/privacidad">{t('Política de privacidad')}</Link>
             {contactEmail && <a href={`mailto:${contactEmail}`}>{t('Contacto')}</a>}

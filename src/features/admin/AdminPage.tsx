@@ -4,6 +4,7 @@ import { Alert, Badge, Button, Card, CardHeader, Dialog, EmptyState, PageHeader,
 import { useToast } from '../../ui/toastContext'
 import { formatPoints } from '../../lib/game'
 import { locale, t } from '../../lib/i18n'
+import { FaucetTransactions, FaucetsAdmin, RevenueAdmin } from './FaucetAdmin'
 import { useAdminWithdrawals, useIsAdmin, useProcessWithdrawal, withdrawalErrorMessage, type AdminWithdrawal } from '../../lib/queries'
 import { STATUS_LABELS, WITHDRAWAL_METHODS, explorerUrl, formatUsd, type WithdrawalStatus } from '../../lib/payouts'
 
@@ -51,22 +52,43 @@ function ProcessDialog({ row, action, onClose }: { row: AdminWithdrawal; action:
   </Dialog>
 }
 
+const sections = () => [
+  { value: 'withdrawals', label: t('Retiros') },
+  { value: 'transactions', label: t('Transacciones de faucets') },
+  { value: 'faucets', label: t('Faucets') },
+  { value: 'revenue', label: t('Ingresos y ajustes') },
+] as const
+
+type Section = ReturnType<typeof sections>[number]['value']
+
 export default function AdminPage() {
   const isAdmin = useIsAdmin()
+  const [section, setSection] = useState<Section>('withdrawals')
+
+  if (isAdmin.isLoading) return <Skeleton height={200} />
+  if (!isAdmin.data) return <EmptyState icon={<ShieldAlert size={20} />} title={t('Acceso restringido')} description={t('Esta sección es solo para administradores.')} />
+
+  return <>
+    <PageHeader title={t('Administración')} description={t('Panel de desarrollador: retiros, cada transacción de las faucets con sus direcciones e ids de FaucetPay, faucets de creadores e ingresos de la plataforma.')} />
+    <div className="tabs admin-sections" role="tablist" aria-label={t('Secciones')}>
+      {sections().map((item) => <button key={item.value} type="button" role="tab" className="tab" aria-selected={section === item.value} onClick={() => setSection(item.value)}>{item.label}</button>)}
+    </div>
+    {section === 'withdrawals' ? <WithdrawalsAdmin /> : section === 'transactions' ? <FaucetTransactions /> : section === 'faucets' ? <FaucetsAdmin /> : <RevenueAdmin />}
+  </>
+}
+
+function WithdrawalsAdmin() {
   const [filter, setFilter] = useState<WithdrawalStatus | 'all'>('pending')
   const list = useAdminWithdrawals(filter)
   const toast = useToast()
   const dateTime = new Intl.DateTimeFormat(locale(), { dateStyle: 'medium', timeStyle: 'short' })
   const [dialog, setDialog] = useState<{ row: AdminWithdrawal; action: 'paid' | 'rejected' } | null>(null)
 
-  if (isAdmin.isLoading) return <Skeleton height={200} />
-  if (!isAdmin.data) return <EmptyState icon={<ShieldAlert size={20} />} title={t('Acceso restringido')} description={t('Esta sección es solo para administradores.')} />
-
   const copy = (value: string) => { void navigator.clipboard?.writeText(value); toast(t('Copiado')) }
   const pendingTotal = filter === 'pending' ? (list.data ?? []).reduce((sum, row) => sum + row.usd_cents, 0) / 100 : null
 
   return <>
-    <PageHeader title={t('Administración')} description={t('Paga cada retiro desde tu exchange o wallet y márcalo como pagado con el hash de la transacción. Si lo rechazas, los puntos vuelven al usuario.')} />
+    <p className="muted">{t('Paga cada retiro desde tu exchange o wallet y márcalo como pagado con el hash de la transacción. Si lo rechazas, los puntos vuelven al usuario.')}</p>
     <div className="tabs" role="tablist" aria-label={t('Estado')}>
       {filters().map((item) => <button key={item.value} type="button" role="tab" className="tab" aria-selected={filter === item.value} onClick={() => setFilter(item.value)}>{item.label}</button>)}
     </div>

@@ -8,10 +8,12 @@
 .faucet-filters { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); width: fit-content; max-width: 100%; }
 .faucet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
 .faucet-card { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-5); border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.faucet-card.is-featured { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent), 0 14px 40px -24px var(--accent-glow); }
 .faucet-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .faucet-card h3 { font-size: var(--text-md); margin: 0; }
 .faucet-card p { color: var(--text-muted); font-size: var(--text-sm); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.faucet-card-top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+.faucet-card-top { display: flex; align-items: center; gap: var(--space-2); }
+.faucet-card-top .faucet-coin { margin-right: auto; }
 .faucet-card-reward { font-family: var(--font-mono, monospace); font-weight: 650; color: var(--accent); }
 .faucet-card-foot { display: flex; align-items: center; gap: var(--space-3); color: var(--text-faint, var(--text-muted)); font-size: var(--text-xs); margin-top: var(--space-2); }
 .faucet-card-foot span { display: inline-flex; align-items: center; gap: 4px; }

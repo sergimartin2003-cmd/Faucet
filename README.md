@@ -68,6 +68,19 @@ Toda la acreditación de puntos ocurre en funciones SQL del servidor; el navegad
 - Los administradores (`app_admins`) ven la sección **Administración → Retiros**: copian el destino, pagan desde su exchange o wallet y lo marcan como pagado con el hash de la transacción, o lo rechazan (los puntos vuelven al usuario). El panel muestra señales de riesgo: cuenta reciente, ofertas anuladas, ganancias del casino.
 - Si BitLabs anula una oferta (callback con valor negativo), `reverse_offerwall_completion` descuenta esos puntos sin dejar el saldo en negativo y lo registra en `offerwall_reversals`.
 
+## Faucets de creadores
+
+Cualquier usuario puede crear su propia faucet (`/dashboard/faucets`) y publicarla en `/f/<nombre>`; el directorio público está en `/faucets`.
+
+- **Sin custodia:** cada faucet se paga con la API key de FaucetPay de su creador, desde su propio saldo en FaucetPay. La key se valida contra FaucetPay (`faucet-key`) y se guarda en Supabase Vault; solo las funciones del servidor la leen.
+- **Reclamos:** `faucet-claim` verifica Cloudflare Turnstile (secreto `TURNSTILE_SECRET_KEY`), aplica los límites (intervalo y máximo diario por dirección y por IP cifrada) en `faucet_reserve_claim`, envía el pago con `POST https://faucetpay.io/api/v1/send` y registra el resultado. Si FaucetPay responde sin fondos o key inválida, la faucet se pausa sola.
+- **Ingresos de la plataforma** (`platform_settings`, editable en Administración → Ingresos y ajustes):
+  - Reparto de anuncios: el `ad_share_pct` % de los banners de cada faucet muestra el bloque de A-ADS de la plataforma (30 % por defecto).
+  - Comisión por pago (`fee_bps`, 5 % por defecto, **desactivada** hasta activarla): se envía desde la faucet del creador a la cuenta de FaucetPay indicada. Actívala solo cuando FaucetPay confirme que lo permite.
+  - Faucets destacadas: el creador paga 1.000 puntos por día (`feature_faucet`) para salir primero en el directorio.
+- **Panel de desarrollador:** Administración muestra cada transacción (faucet, creador, destino, IP cifrada, importe, estado, `payout_id` y `payout_user_hash` de FaucetPay, comisión y errores) con exportación a CSV, la lista de faucets (pausar o suspender), los destacados vendidos y el resumen de ingresos.
+- Monedas: BTC, ETH, DOGE, LTC, BCH, DASH, DGB, TRX, USDT, ZEC, BNB, SOL, XRP y TON; los importes son enteros en satoshis (1e-8), como espera FaucetPay.
+
 ## Idiomas
 
 Español (idioma fuente) e inglés. Los textos se escriben en español dentro de `t()` (`src/lib/i18n.ts`) y la traducción inglesa está en `src/i18n/`, con la frase española como clave. El test `src/i18n/i18n.test.ts` falla si falta alguna traducción. El idioma se elige con el botón ES/EN o en Ajustes y se guarda en el navegador.

@@ -40,6 +40,7 @@ export type PublicFaucet = {
   claims_count: number
   paid_total: number
   funded: boolean
+  featured?: boolean
   created_at: string
 }
 
@@ -69,6 +70,7 @@ export type MyFaucet = {
   claims_count: number
   paid_total: number
   fees_total: number
+  featured_until: string | null
   created_at: string
 }
 
@@ -124,7 +126,7 @@ export const usePublicFaucets = (currency: string) => useQuery({
   queryKey: ['public-faucets', currency],
   enabled,
   queryFn: async (): Promise<PublicFaucet[]> => {
-    const { data, error } = await client().rpc('list_public_faucets', { p_currency: currency || null, p_limit: 120 })
+    const { data, error } = await client().rpc('list_directory_faucets', { p_currency: currency || null, p_limit: 120 })
     if (error) throw error
     return (data ?? []) as PublicFaucet[]
   },
@@ -192,6 +194,24 @@ export function useFaucetKey() {
     mutationFn: (input: { faucetId: string; apiKey?: string }) =>
       invoke<{ ok: true; balance: number; currency: string }>('faucet-key', { faucet_id: input.faucetId, ...(input.apiKey ? { api_key: input.apiKey } : {}) }),
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['my-faucets'] }) },
+  })
+}
+
+// Featuring costs 1.000 points (1 USD) per day and puts the faucet at the top of the directory.
+export const FEATURE_POINTS_PER_DAY = 1000
+
+export function useFeatureFaucet() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; days: number }) => {
+      const { data, error } = await client().rpc('feature_faucet', { p_id: input.id, p_days: input.days })
+      if (error) throw error
+      return data as { featured_until: string; points: number; balance: number }
+    },
+    onSuccess: (result) => {
+      queryClient.setQueryData<{ points: number }>(['faucet'], (old) => (old ? { ...old, points: result.balance } : old))
+      void queryClient.invalidateQueries({ queryKey: ['my-faucets'] })
+    },
   })
 }
 
@@ -279,6 +299,43 @@ export function useAdminSetFaucetStatus() {
   })
 }
 
+export type PlatformRevenue = {
+  fees: { currency: string; amount: number; count: number }[]
+  promotions_points: number
+  promotions_count: number
+  promotions_month_points: number
+  faucets_active: number
+  faucets_total: number
+  claims_paid: number
+  claims_failed: number
+  claims_today: number
+  withdrawals_pending_cents: number
+  withdrawals_paid_cents: number
+  points_outstanding: number
+}
+
+export const usePlatformRevenue = () => useQuery({
+  queryKey: ['platform-revenue'],
+  enabled,
+  queryFn: async (): Promise<PlatformRevenue> => {
+    const { data, error } = await client().rpc('admin_platform_revenue')
+    if (error) throw error
+    return data as PlatformRevenue
+  },
+})
+
+export type AdminPromotion = { id: number; faucet_slug: string; faucet_name: string; owner_email: string; days: number; points: number; featured_until: string; created_at: string }
+
+export const useAdminPromotions = () => useQuery({
+  queryKey: ['admin-promotions'],
+  enabled,
+  queryFn: async (): Promise<AdminPromotion[]> => {
+    const { data, error } = await client().rpc('admin_faucet_promotions', { p_limit: 200 })
+    if (error) throw error
+    return (data ?? []) as AdminPromotion[]
+  },
+})
+
 export const useAdminFaucetClaims = (status: string) => useQuery({
   queryKey: ['admin-faucet-claims', status],
   enabled,
@@ -313,6 +370,8 @@ export function faucetErrorMessage(error: unknown) {
   if (text.includes('Faucet banned')) return t('Esta faucet ha sido suspendida por incumplir las normas.')
   if (text.includes('Email confirmation')) return t('Confirma tu correo electrónico antes de crear una faucet.')
   if (text.includes('Fee recipient')) return t('Indica la cuenta de FaucetPay que recibe la comisión.')
+  if (text.includes('Faucet must be active')) return t('Activa la faucet antes de destacarla.')
+  if (text.includes('Insufficient balance')) return t('No tienes puntos suficientes.')
   if (text.includes('Admin only')) return t('Solo un administrador puede hacer esto.')
   if (text.includes('violates check constraint') || text.includes('22023')) return t('Revisa los datos: algún valor está fuera de los límites.')
   return t('No se pudo completar la acción. Inténtalo de nuevo en unos minutos.')
