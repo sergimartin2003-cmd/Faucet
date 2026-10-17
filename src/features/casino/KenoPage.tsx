@@ -3,6 +3,7 @@ import { Eraser, Shuffle } from 'lucide-react'
 import { Button } from '../../ui'
 import { KENO_TABLES, formatMultiplier, payoutFor } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { reducedMotion, useCanBet, useInstantGame } from './useInstantGame'
 
@@ -46,26 +47,26 @@ export default function KenoPage() {
   const hitsSoFar = drawn.slice(0, shown).filter((n) => playedPicks.has(n)).length
 
   return <>
-    <GameHeader game="keno" description="Elige de 1 a 10 números del 1 al 40. Se sortean 10: cuantos más aciertes, más cobras." />
+    <GameHeader game="keno" description={t('Elige de 1 a 10 números del 1 al 40. Se sortean 10: cuantos más aciertes, más cobras.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
         <div className="row-inline" style={{ gap: 8 }}>
-          <Button size="sm" disabled={game.busy} onClick={randomPicks}><Shuffle size={14} />Aleatorio</Button>
-          <Button size="sm" variant="ghost" disabled={game.busy || picks.length === 0} onClick={() => setPicks([])}><Eraser size={14} />Borrar</Button>
+          <Button size="sm" disabled={game.busy} onClick={randomPicks}><Shuffle size={14} />{t('Aleatorio')}</Button>
+          <Button size="sm" variant="ghost" disabled={game.busy || picks.length === 0} onClick={() => setPicks([])}><Eraser size={14} />{t('Borrar')}</Button>
         </div>
         <div className="info-grid">
-          <InfoRow label="Números elegidos" value={`${picks.length} / ${MAX_PICKS}`} />
-          {table && <InfoRow label="Premio máximo" value={`${formatPoints(payoutFor(bet, table[table.length - 1]))} pts`} />}
+          <InfoRow label={t('Números elegidos')} value={`${picks.length} / ${MAX_PICKS}`} />
+          {table && <InfoRow label={t('Premio máximo')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, table[table.length - 1])) })} />}
         </div>
         {table && <div className="field">
-          <span className="field-label">Pagos por aciertos</span>
+          <span className="field-label">{t('Pagos por aciertos')}</span>
           <div className="keno-pay">
             {table.map((m, hits) => m > 0 && <span key={hits} className={game.revealed && game.result?.result.hits === hits ? 'is-current' : ''}>{hits}: {formatMultiplier(m)}</span>)}
           </div>
         </div>}
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet || picks.length === 0}
-          onClick={() => void game.run({ p_bet: bet, p_picks: picks })}>Sortear</Button>
+          onClick={() => void game.run({ p_bet: bet, p_picks: picks })}>{t('Sortear')}</Button>
       </>}
       stage={<div className="stack">
         <div className="keno-grid">
@@ -77,8 +78,8 @@ export default function KenoPage() {
           })}
         </div>
         <div className="stage-center" style={{ minHeight: 64 }}>
-          {game.result && !game.revealed && <p className="muted">Aciertos: <strong>{hitsSoFar}</strong></p>}
-          {game.revealed && game.result && <Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={`${game.result.result.hits} aciertos`} />}
+          {game.result && !game.revealed && <p className="muted">{t('Aciertos:')} <strong>{hitsSoFar}</strong></p>}
+          {game.revealed && game.result && <Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={t('{hits} aciertos', { hits: game.result.result.hits })} />}
         </div>
       </div>}
       below={<RecentBets game="keno" />}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../ui'
 import { formatMultiplier, multiplierChance, payoutFor } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { locale, t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { reducedMotion, useCanBet, useInstantGame } from './useInstantGame'
 
@@ -36,27 +37,27 @@ export default function LimboPage() {
   const shown = useCountUp(point === null ? null : Math.min(point, 10000), 600)
 
   return <>
-    <GameHeader game="limbo" description="Fija un multiplicador objetivo. Si el número que sale es igual o mayor, cobras tu apuesta por ese multiplicador." />
+    <GameHeader game="limbo" description={t('Fija un multiplicador objetivo. Si el número que sale es igual o mayor, cobras tu apuesta por ese multiplicador.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
         <div className="field">
-          <label htmlFor="limbo-target">Multiplicador objetivo</label>
+          <label htmlFor="limbo-target">{t('Multiplicador objetivo')}</label>
           <input id="limbo-target" className="input mono-num" type="number" min={1.01} max={10000} step={0.01} value={target} disabled={game.busy}
             onChange={(event) => setTarget(Math.min(10000, Math.max(1.01, Math.round(Number(event.target.value) * 100) / 100 || 1.01)))} />
         </div>
         <div className="info-grid">
-          <InfoRow label="Probabilidad" value={`${multiplierChance(target).toLocaleString('es-ES', { maximumFractionDigits: 4 })}%`} />
-          <InfoRow label="Premio si ganas" value={`${formatPoints(payoutFor(bet, target))} pts`} />
+          <InfoRow label={t('Probabilidad')} value={`${multiplierChance(target).toLocaleString(locale(), { maximumFractionDigits: 4 })}%`} />
+          <InfoRow label={t('Premio si ganas')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, target)) })} />
         </div>
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet}
-          onClick={() => void game.run({ p_bet: bet, p_target: target })}>Jugar</Button>
+          onClick={() => void game.run({ p_bet: bet, p_target: target })}>{t('Jugar')}</Button>
       </>}
       stage={<div className="stage-center">
         <div className={`big-multiplier${game.revealed && game.result ? (game.result.payout > 0 ? ' is-win' : ' is-loss') : ''}`}>
-          {shown === null ? '1,00×' : formatMultiplier(Math.floor(shown * 100) / 100)}
+          {formatMultiplier(shown === null ? 1 : Math.floor(shown * 100) / 100)}
         </div>
-        <p className="muted">Objetivo: {formatMultiplier(target)}</p>
+        <p className="muted">{t('Objetivo: {value}', { value: formatMultiplier(target) })}</p>
         {game.revealed && game.result && <Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} />}
       </div>}
       below={<RecentBets game="limbo" />}

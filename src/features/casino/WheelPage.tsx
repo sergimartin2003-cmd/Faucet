@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../ui'
-import { RISK_LABELS, WHEEL_TABLES, formatMultiplier, payoutFor, type Risk } from '../../lib/casino'
+import { WHEEL_TABLES, formatMultiplier, payoutFor, riskLabel, type Risk } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets, Segmented } from './components'
 import { useCanBet, useInstantGame } from './useInstantGame'
 
@@ -46,14 +47,14 @@ export default function WheelPage() {
   }, [game.result])
 
   return <>
-    <GameHeader game="wheel" description="Gira la rueda y cobra el multiplicador donde se detenga. Con riesgo alto, casi todo es cero salvo una casilla de 19,8×." />
+    <GameHeader game="wheel" description={t('Gira la rueda y cobra el multiplicador donde se detenga. Con riesgo alto, casi todo es cero salvo una casilla de 19,8×.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
-        <Segmented label="Riesgo" value={risk} disabled={game.busy} onChange={setRisk}
-          options={(['low', 'medium', 'high'] as Risk[]).map((value) => ({ value, label: RISK_LABELS[value] }))} />
-        <InfoRow label="Premio máximo" value={`${formatPoints(payoutFor(bet, Math.max(...WHEEL_TABLES[risk])))} pts`} />
-        <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet} onClick={() => void game.run({ p_bet: bet, p_risk: risk })}>Girar</Button>
+        <Segmented label={t('Riesgo')} value={risk} disabled={game.busy} onChange={setRisk}
+          options={(['low', 'medium', 'high'] as Risk[]).map((value) => ({ value, label: riskLabel(value) }))} />
+        <InfoRow label={t('Premio máximo')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, Math.max(...WHEEL_TABLES[risk]))) })} />
+        <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet} onClick={() => void game.run({ p_bet: bet, p_risk: risk })}>{t('Girar')}</Button>
       </>}
       stage={<div className="stage-center">
         <div className="wheel-wrap">

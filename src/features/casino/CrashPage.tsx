@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../ui'
 import { formatMultiplier, multiplierChance, payoutFor } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { locale, t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { reducedMotion, useCanBet, useInstantGame } from './useInstantGame'
 
@@ -60,8 +61,8 @@ function CrashChart({ point, cashout, runId }: { point: number | null; cashout: 
     <div className="crash-overlay">
       <div>
         <div className={`big-multiplier${crashed ? ' is-loss' : cashedOut ? ' is-win' : ''}`}>{formatMultiplier(Math.floor(current * 100) / 100)}</div>
-        {crashed && <p className="muted">¡Ha explotado!</p>}
-        {!crashed && cashedOut && <p className="text-win">Retirado a {formatMultiplier(cashout)}</p>}
+        {crashed && <p className="muted">{t('¡Ha explotado!')}</p>}
+        {!crashed && cashedOut && <p className="text-win">{t('Retirado a {value}', { value: formatMultiplier(cashout) })}</p>}
       </div>
     </div>
   </div>
@@ -76,25 +77,25 @@ export default function CrashPage() {
   const playedCashout = game.result ? Number(game.result.params.target) : cashout
 
   return <>
-    <GameHeader game="crash" description="El multiplicador sube hasta que explota. Fija tu retirada automática: si el cohete llega a ella antes de explotar, cobras." />
+    <GameHeader game="crash" description={t('El multiplicador sube hasta que explota. Fija tu retirada automática: si el cohete llega a ella antes de explotar, cobras.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
         <div className="field">
-          <label htmlFor="crash-cashout">Retirada automática</label>
+          <label htmlFor="crash-cashout">{t('Retirada automática')}</label>
           <input id="crash-cashout" className="input mono-num" type="number" min={1.01} max={10000} step={0.01} value={cashout} disabled={game.busy}
             onChange={(event) => setCashout(Math.min(10000, Math.max(1.01, Math.round(Number(event.target.value) * 100) / 100 || 1.01)))} />
         </div>
         <div className="info-grid">
-          <InfoRow label="Probabilidad" value={`${multiplierChance(cashout).toLocaleString('es-ES', { maximumFractionDigits: 4 })}%`} />
-          <InfoRow label="Premio si ganas" value={`${formatPoints(payoutFor(bet, cashout))} pts`} />
+          <InfoRow label={t('Probabilidad')} value={`${multiplierChance(cashout).toLocaleString(locale(), { maximumFractionDigits: 4 })}%`} />
+          <InfoRow label={t('Premio si ganas')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, cashout)) })} />
         </div>
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet}
-          onClick={() => void game.run({ p_bet: bet, p_cashout: cashout })}>Despegar</Button>
+          onClick={() => void game.run({ p_bet: bet, p_cashout: cashout })}>{t('Despegar')}</Button>
       </>}
       stage={<div className="stack">
         <CrashChart point={point} cashout={playedCashout} runId={game.result?.bet_id ?? 0} />
-        {game.revealed && game.result && <div className="stage-center"><Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={`Explotó a ${formatMultiplier(Number(game.result.result.point))}`} /></div>}
+        {game.revealed && game.result && <div className="stage-center"><Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={t('Explotó a {value}', { value: formatMultiplier(Number(game.result.result.point)) })} /></div>}
       </div>}
       below={<RecentBets game="crash" />}
     />

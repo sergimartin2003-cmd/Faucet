@@ -3,6 +3,7 @@ import { Eraser } from 'lucide-react'
 import { Button } from '../../ui'
 import { MAX_BET, ROULETTE_WHEEL, rouletteColor, rouletteHits, type RouletteBet, type RouletteKind } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { reducedMotion, useInstantGame } from './useInstantGame'
 import { useFaucetStatus } from '../faucet/useFaucetStatus'
@@ -36,13 +37,13 @@ function Strip({ number }: { number: number | null }) {
 type Spot = { kind: RouletteKind; value?: number }
 const keyOf = (spot: Spot) => `${spot.kind}:${spot.value ?? ''}`
 
-const OUTSIDE: { spot: Spot; label: string; className?: string }[] = [
-  { spot: { kind: 'low' }, label: '1–18' },
-  { spot: { kind: 'even' }, label: 'Par' },
-  { spot: { kind: 'red' }, label: 'Rojo', className: 'r-red' },
-  { spot: { kind: 'black' }, label: 'Negro', className: 'r-black' },
-  { spot: { kind: 'odd' }, label: 'Impar' },
-  { spot: { kind: 'high' }, label: '19–36' },
+const OUTSIDE: { spot: Spot; label: () => string; className?: string }[] = [
+  { spot: { kind: 'low' }, label: () => '1–18' },
+  { spot: { kind: 'even' }, label: () => t('Par') },
+  { spot: { kind: 'red' }, label: () => t('Rojo'), className: 'r-red' },
+  { spot: { kind: 'black' }, label: () => t('Negro'), className: 'r-black' },
+  { spot: { kind: 'odd' }, label: () => t('Impar') },
+  { spot: { kind: 'high' }, label: () => '19–36' },
 ]
 
 export default function RoulettePage() {
@@ -68,25 +69,25 @@ export default function RoulettePage() {
   const chipOn = (spot: Spot) => bets[keyOf(spot)]?.amount
   const cellClass = (spot: Spot, base: string) => `rb-cell ${base}${shownHit !== null && rouletteHits(spot, shownHit) ? ' is-hit' : ''}`
   const cell = (spot: Spot, label: string, base: string, style?: CSSProperties) =>
-    <button key={keyOf(spot)} type="button" className={cellClass(spot, base)} style={style} disabled={game.busy} onClick={() => place(spot)} aria-label={`Apostar a ${label}`}>
+    <button key={keyOf(spot)} type="button" className={cellClass(spot, base)} style={style} disabled={game.busy} onClick={() => place(spot)} aria-label={t('Apostar a {spot}', { spot: label })}>
       {label}{chipOn(spot) ? <span className="rb-chip">{chipOn(spot)}</span> : null}
     </button>
 
   return <>
-    <GameHeader game="roulette" description="Ruleta europea con un solo cero. Elige el valor de la ficha y colócala en el tablero: pleno 36×, docenas y columnas 3×, colores y mitades 2×." />
+    <GameHeader game="roulette" description={t('Ruleta europea con un solo cero. Elige el valor de la ficha y colócala en el tablero: pleno 36×, docenas y columnas 3×, colores y mitades 2×.')} />
     <GameLayout
       controls={<>
-        <BetInput label="Valor de la ficha" value={chip} onChange={setChip} disabled={game.busy} />
+        <BetInput label={t('Valor de la ficha')} value={chip} onChange={setChip} disabled={game.busy} />
         <div className="info-grid">
-          <InfoRow label="Apuesta total" value={`${formatPoints(total)} pts`} />
-          <InfoRow label="Fichas en mesa" value={Object.keys(bets).length} />
+          <InfoRow label={t('Apuesta total')} value={t('{points} pts', { points: formatPoints(total) })} />
+          <InfoRow label={t('Fichas en mesa')} value={Object.keys(bets).length} />
         </div>
         <div className="row-inline" style={{ gap: 8 }}>
-          <Button size="sm" disabled={game.busy || total === 0} onClick={() => setBets({})}><Eraser size={14} />Quitar fichas</Button>
-          <Button size="sm" variant="ghost" disabled={game.busy || total === 0} onClick={() => setBets((old) => Object.fromEntries(Object.entries(old).map(([k, b]) => [k, { ...b, amount: b.amount * 2 }])))}>2× fichas</Button>
+          <Button size="sm" disabled={game.busy || total === 0} onClick={() => setBets({})}><Eraser size={14} />{t('Quitar fichas')}</Button>
+          <Button size="sm" variant="ghost" disabled={game.busy || total === 0} onClick={() => setBets((old) => Object.fromEntries(Object.entries(old).map(([k, b]) => [k, { ...b, amount: b.amount * 2 }])))}>{t('2× fichas')}</Button>
         </div>
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={total === 0 || points === null || total > points}
-          onClick={() => void spin()}>Girar</Button>
+          onClick={() => void spin()}>{t('Girar')}</Button>
         {history.length > 0 && <div className="row-inline" style={{ flexWrap: 'wrap', gap: 4 }}>
           {history.map((n, i) => <span key={i} className={`r-cell r-${rouletteColor(Number(n))}`} style={{ width: 30, height: 30, fontSize: 12, borderRadius: 7 }}>{n}</span>)}
         </div>}
@@ -94,7 +95,7 @@ export default function RoulettePage() {
       stage={<div className="stack">
         <Strip key={game.result?.bet_id ?? 0} number={result} />
         <div className="stage-center" style={{ minHeight: 64 }}>
-          {game.revealed && game.result && <Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={`Ha salido el ${result}`} />}
+          {game.revealed && game.result && <Outcome bet={game.result.bet} payout={game.result.payout} multiplier={Number(game.result.multiplier)} label={t('Ha salido el {number}', { number: String(result) })} />}
         </div>
         <div className="roulette-wrap">
           <div>
@@ -111,7 +112,7 @@ export default function RoulettePage() {
               {[1, 2, 3].map((dozen) => cell({ kind: 'dozen', value: dozen }, `${(dozen - 1) * 12 + 1}–${dozen * 12}`, 'rb-outside'))}
             </div>
             <div className="roulette-outside">
-              {OUTSIDE.map(({ spot, label, className }) => cell(spot, label, className ?? 'rb-outside'))}
+              {OUTSIDE.map(({ spot, label, className }) => cell(spot, label(), className ?? 'rb-outside'))}
             </div>
           </div>
         </div>

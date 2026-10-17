@@ -3,11 +3,12 @@ import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tansta
 import { supabase } from '../../lib/supabase'
 import { errorCode, type FaucetState } from '../../lib/queries'
 import type { CasinoGame } from '../../lib/casino'
+import { t } from '../../lib/i18n'
 
 const enabled = Boolean(supabase)
 
 function client() {
-  if (!supabase) throw new Error('Supabase no está configurado.')
+  if (!supabase) throw new Error(t('Supabase no está configurado.'))
   return supabase
 }
 
@@ -43,7 +44,7 @@ export type SessionView = {
 export async function callCasino<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   const { data, error } = await client().rpc(fn, args)
   if (error) throw error
-  if (data === null || data === undefined) throw new Error('El servidor no devolvió el resultado.')
+  if (data === null || data === undefined) throw new Error(t('El servidor no devolvió el resultado.'))
   return data as T
 }
 
@@ -157,15 +158,15 @@ export const useCasinoBets = (game: CasinoGame | '', pageSize = BETS_PAGE_SIZE) 
 
 export function casinoErrorMessage(error: unknown) {
   const text = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as { message: unknown }).message) : ''
-  if (text.includes('Insufficient balance')) return 'No tienes puntos suficientes para esta apuesta.'
-  if (text.includes('Email confirmation')) return 'Confirma tu correo electrónico para jugar en el casino.'
-  if (text.includes('Invalid bet')) return 'La apuesta debe estar entre 1 y 100.000 puntos.'
-  if (text.includes('Game in progress')) return 'Tienes una partida sin terminar. Termínala antes de empezar otra o de cambiar la semilla.'
-  if (text.includes('No active game')) return 'No hay ninguna partida en curso.'
-  if (text.includes('Nothing to cash out')) return 'Aún no hay nada que retirar.'
-  if (text.includes('Invalid parameters')) return 'Revisa los valores de la apuesta.'
-  if (errorCode(error) === 'PGRST202' || text.includes('Could not find the function')) return 'El casino aún no está activado en la base de datos.'
-  return 'No se pudo completar la jugada. Inténtalo de nuevo.'
+  if (text.includes('Insufficient balance')) return t('No tienes puntos suficientes para esta apuesta.')
+  if (text.includes('Email confirmation')) return t('Confirma tu correo electrónico para jugar en el casino.')
+  if (text.includes('Invalid bet')) return t('La apuesta debe estar entre 1 y 100.000 puntos.')
+  if (text.includes('Game in progress')) return t('Tienes una partida sin terminar. Termínala antes de empezar otra o de cambiar la semilla.')
+  if (text.includes('No active game')) return t('No hay ninguna partida en curso.')
+  if (text.includes('Nothing to cash out')) return t('Aún no hay nada que retirar.')
+  if (text.includes('Invalid parameters')) return t('Revisa los valores de la apuesta.')
+  if (errorCode(error) === 'PGRST202' || text.includes('Could not find the function')) return t('El casino aún no está activado en la base de datos.')
+  return t('No se pudo completar la jugada. Inténtalo de nuevo.')
 }
 
 export function verifyLink(row: Pick<BetRow, 'game' | 'client_seed' | 'nonce' | 'server_seed_hash' | 'params'>) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../../ui'
 import { SLOT_ICONS, SLOT_SYMBOLS, payoutFor, slotSymbol, type SlotSymbol } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { reducedMotion, useCanBet, useInstantGame } from './useInstantGame'
 
@@ -34,7 +35,7 @@ export default function SlotsPage() {
   const won = game.revealed && Boolean(game.result && game.result.payout > 0)
 
   return <>
-    <GameHeader game="slots" description="Tres rodillos y una línea de pago. Tres símbolos iguales pagan hasta 500×; las cerezas en los primeros rodillos también premian." />
+    <GameHeader game="slots" description={t('Tres rodillos y una línea de pago. Tres símbolos iguales pagan hasta 500×; las cerezas en los primeros rodillos también premian.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
@@ -43,8 +44,8 @@ export default function SlotsPage() {
           <div className="paytable-row"><span>🍒 🍒 ·</span><strong>4×</strong></div>
           <div className="paytable-row"><span>🍒 · ·</span><strong>1×</strong></div>
         </div>
-        <InfoRow label="Premio máximo" value={`${formatPoints(payoutFor(bet, 500))} pts`} />
-        <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet} onClick={() => void game.run({ p_bet: bet })}>Girar</Button>
+        <InfoRow label={t('Premio máximo')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, 500)) })} />
+        <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet} onClick={() => void game.run({ p_bet: bet })}>{t('Girar')}</Button>
       </>}
       stage={<div className="stage-center">
         <div className="slots-machine">

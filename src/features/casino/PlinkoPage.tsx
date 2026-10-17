@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../ui'
-import { PLINKO_TABLES, RISK_LABELS, payoutFor, type Risk } from '../../lib/casino'
+import { PLINKO_TABLES, payoutFor, riskLabel, type Risk } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets, Segmented } from './components'
 import { reducedMotion, useCanBet, useInstantGame } from './useInstantGame'
 
@@ -65,16 +66,16 @@ export default function PlinkoPage() {
   const hit = game.revealed && game.result && game.result.params.rows === shownRows ? game.result.result.bucket : null
 
   return <>
-    <GameHeader game="plinko" description="La bola rebota fila a fila hasta caer en una casilla. Los extremos son raros pero pagan mucho; más filas y más riesgo, premios más extremos." />
+    <GameHeader game="plinko" description={t('La bola rebota fila a fila hasta caer en una casilla. Los extremos son raros pero pagan mucho; más filas y más riesgo, premios más extremos.')} />
     <GameLayout
       controls={<>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
-        <Segmented label="Riesgo" value={risk} disabled={game.busy} onChange={setRisk}
-          options={(['low', 'medium', 'high'] as Risk[]).map((value) => ({ value, label: RISK_LABELS[value] }))} />
-        <Segmented label="Filas" value={rows} disabled={game.busy} onChange={setRows} options={[8, 12, 16].map((value) => ({ value, label: String(value) }))} />
-        <InfoRow label="Premio máximo" value={`${formatPoints(payoutFor(bet, Math.max(...PLINKO_TABLES[rows][risk])))} pts`} />
+        <Segmented label={t('Riesgo')} value={risk} disabled={game.busy} onChange={setRisk}
+          options={(['low', 'medium', 'high'] as Risk[]).map((value) => ({ value, label: riskLabel(value) }))} />
+        <Segmented label={t('Filas')} value={rows} disabled={game.busy} onChange={setRows} options={[8, 12, 16].map((value) => ({ value, label: String(value) }))} />
+        <InfoRow label={t('Premio máximo')} value={t('{points} pts', { points: formatPoints(payoutFor(bet, Math.max(...PLINKO_TABLES[rows][risk]))) })} />
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet}
-          onClick={() => void game.run({ p_bet: bet, p_rows: rows, p_risk: risk })}>Soltar bola</Button>
+          onClick={() => void game.run({ p_bet: bet, p_rows: rows, p_risk: risk })}>{t('Soltar bola')}</Button>
       </>}
       stage={<div className="stack">
         <Board key={game.result?.bet_id ?? 0} rows={shownRows} path={game.result && game.result.params.rows === shownRows ? game.result.result.path : null} />

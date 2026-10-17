@@ -3,6 +3,8 @@
 // and formulas mirror it so the UI can show odds and players can re-derive any
 // outcome from its seeds.
 
+import { locale, t } from './i18n'
+
 export const MIN_BET = 1
 export const MAX_BET = 100_000
 export const MAX_PAYOUT = 1_000_000
@@ -24,6 +26,24 @@ export const GAME_LABELS: Record<CasinoGame, string> = {
   mines: 'Minas',
   hilo: 'Hi-Lo',
   blackjack: 'Blackjack',
+}
+
+// Translated game name for the current language (GAME_LABELS stays in Spanish).
+export function gameLabel(game: CasinoGame) {
+  switch (game) {
+    case 'dice': return t('Dados')
+    case 'limbo': return t('Limbo')
+    case 'crash': return t('Crash')
+    case 'coinflip': return t('Cara o cruz')
+    case 'roulette': return t('Ruleta')
+    case 'slots': return t('Tragaperras')
+    case 'plinko': return t('Plinko')
+    case 'keno': return t('Keno')
+    case 'wheel': return t('Rueda')
+    case 'mines': return t('Minas')
+    case 'hilo': return t('Hi-Lo')
+    case 'blackjack': return t('Blackjack')
+  }
 }
 
 export const GAME_SLUGS: Record<CasinoGame, string> = {
@@ -105,6 +125,7 @@ export const PLINKO_TABLES: Record<number, Record<Risk, number[]>> = {
 
 export type Risk = 'low' | 'medium' | 'high'
 export const RISK_LABELS: Record<Risk, string> = { low: 'Bajo', medium: 'Medio', high: 'Alto' }
+export const riskLabel = (risk: Risk) => (risk === 'low' ? t('Bajo') : risk === 'medium' ? t('Medio') : t('Alto'))
 
 // Index = number of hits.
 export const KENO_TABLES: Record<number, number[]> = {
@@ -255,4 +276,4 @@ export async function deriveOutcome(game: CasinoGame, serverSeed: string, client
   }
 }
 
-export const formatMultiplier = (value: number) => `${value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}×`
+export const formatMultiplier = (value: number) => `${value.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 4 })}×`

@@ -3,6 +3,7 @@ import { Dices } from 'lucide-react'
 import { Button, Skeleton } from '../../ui'
 import { formatMultiplier, minesMultiplier, payoutFor } from '../../lib/casino'
 import { formatPoints } from '../../lib/game'
+import { t } from '../../lib/i18n'
 import { BetInput, GameHeader, GameLayout, InfoRow, Outcome, RecentBets } from './components'
 import { useCanBet, useSessionGame } from './useInstantGame'
 import type { SessionView } from './api'
@@ -34,32 +35,32 @@ export default function MinesPage() {
   }
 
   return <>
-    <GameHeader game="mines" description="Hay minas escondidas en un tablero de 5×5. Cada gema que destapas sube el multiplicador; retírate cuando quieras, antes de pisar una mina." />
+    <GameHeader game="mines" description={t('Hay minas escondidas en un tablero de 5×5. Cada gema que destapas sube el multiplicador; retírate cuando quieras, antes de pisar una mina.')} />
     <GameLayout
       controls={playing && view ? <>
         <div className="info-grid">
-          <InfoRow label="Apuesta" value={`${formatPoints(view.bet)} pts`} />
-          <InfoRow label="Minas" value={view.mines_count} />
-          <InfoRow label="Multiplicador actual" value={formatMultiplier(multiplier)} />
-          {view.next_multiplier !== null && <InfoRow label="Siguiente gema" value={formatMultiplier(Number(view.next_multiplier))} />}
+          <InfoRow label={t('Apuesta')} value={t('{points} pts', { points: formatPoints(view.bet) })} />
+          <InfoRow label={t('Minas')} value={view.mines_count} />
+          <InfoRow label={t('Multiplicador actual')} value={formatMultiplier(multiplier)} />
+          {view.next_multiplier !== null && <InfoRow label={t('Siguiente gema')} value={formatMultiplier(Number(view.next_multiplier))} />}
         </div>
-        <Button variant="secondary" disabled={game.busy} onClick={randomTile}><Dices size={16} />Casilla al azar</Button>
+        <Button variant="secondary" disabled={game.busy} onClick={randomTile}><Dices size={16} />{t('Casilla al azar')}</Button>
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={revealed.size === 0}
-          onClick={() => void game.call('mines_cashout')}>Retirar {formatPoints(payoutFor(view.bet, multiplier))} pts</Button>
+          onClick={() => void game.call('mines_cashout')}>{t('Retirar {points} pts', { points: formatPoints(payoutFor(view.bet, multiplier)) })}</Button>
       </> : <>
         <BetInput value={bet} onChange={setBet} disabled={game.busy} />
         <div className="field">
-          <label htmlFor="mines-count">Número de minas</label>
+          <label htmlFor="mines-count">{t('Número de minas')}</label>
           <select id="mines-count" className="select" value={mines} disabled={game.busy} onChange={(event) => setMines(Number(event.target.value))}>
             {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
         <div className="info-grid">
-          <InfoRow label="Primera gema" value={formatMultiplier(minesMultiplier(mines, 1))} />
-          <InfoRow label="Tablero completo" value={formatMultiplier(minesMultiplier(mines, 25 - mines))} />
+          <InfoRow label={t('Primera gema')} value={formatMultiplier(minesMultiplier(mines, 1))} />
+          <InfoRow label={t('Tablero completo')} value={formatMultiplier(minesMultiplier(mines, 25 - mines))} />
         </div>
         <Button variant="primary" size="lg" className="btn-block" loading={game.busy} disabled={!canBet || game.loading}
-          onClick={() => void game.call('mines_start', { p_bet: bet, p_mines: mines })}>Empezar</Button>
+          onClick={() => void game.call('mines_start', { p_bet: bet, p_mines: mines })}>{t('Empezar')}</Button>
       </>}
       stage={game.loading ? <Skeleton height={360} /> : <div className="stack">
         <div className="mines-grid">
@@ -68,14 +69,14 @@ export default function MinesPage() {
             const finished = view && !view.active
             const isMine = finished && mineSet.has(tile)
             const cls = isGem ? ' is-gem' : isMine ? ` is-mine${view?.hit === tile ? '' : ' is-faded'}` : finished ? ' is-faded' : ''
-            return <button key={tile} type="button" className={`mine-tile${cls}`} disabled={!playing || isGem || game.busy} onClick={() => reveal(tile)} aria-label={`Casilla ${tile + 1}`}>
+            return <button key={tile} type="button" className={`mine-tile${cls}`} disabled={!playing || isGem || game.busy} onClick={() => reveal(tile)} aria-label={t('Casilla {n}', { n: tile + 1 })}>
               {isGem ? '💎' : isMine ? '💣' : finished ? '💎' : ''}
             </button>
           })}
         </div>
         <div className="stage-center" style={{ minHeight: 64 }}>
-          {view && !view.active && <Outcome bet={view.bet} payout={view.payout} multiplier={view.payout > 0 ? multiplier : 0} label="¡Mina!" />}
-          {!view && <p className="muted">Elige tu apuesta y el número de minas para empezar.</p>}
+          {view && !view.active && <Outcome bet={view.bet} payout={view.payout} multiplier={view.payout > 0 ? multiplier : 0} label={t('¡Mina!')} />}
+          {!view && <p className="muted">{t('Elige tu apuesta y el número de minas para empezar.')}</p>}
         </div>
       </div>}
       below={<RecentBets game="mines" />}
